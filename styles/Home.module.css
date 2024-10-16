@@ -1,0 +1,199 @@
+.container {
+  min-height: 100vh;
+  padding: 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.title a {
+  color: #0070f3;
+  text-decoration: none;
+}
+
+.title a:hover,
+.title a:focus,
+.title a:active {
+  text-decoration: underline;
+}
+
+.title {
+  margin: 0 0 1rem;
+  line-height: 1.15;
+  font-size: 3.6rem;
+}
+
+.title {
+  text-align: center;
+}
+
+.title,
+.description {
+  text-align: center;
+}
+
+.description {
+  line-height: 1.5;
+  font-size: 1.5rem;
+}
+
+.grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  max-width: 800px;
+  margin-top: 3rem;
+}
+
+.card {
+  margin: 1rem;
+  flex-basis: 45%;
+  padding: 1.5rem;
+  text-align: left;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.card:hover,
+.card:focus,
+.card:active {
+  color: #0070f3;
+  border-color: #0070f3;
+}
+
+.card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+}
+
+.card p {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+.logo {
+  height: 1em;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    width: 100%;
+    flex-direction: column;
+  }
+}
+
+/* background page css */
+
+.container {
+  min-height: 100vh;
+  width: 100vw; /* Ensure container covers full viewport width */
+  padding: 0; /* Remove padding to prevent any overflow */
+  margin: 0; /* Ensure no default margin */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: fixed; 
+  top: 0;
+  left: 0;
+  box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+}
+
+.backgroundImage {
+  background-image: url('/back.webp'); /* Ensure the path is correct */
+  background-size: cover; /* Cover the entire area */
+  background-position: center; /* Center the background image */
+  height: 100vh; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed; /* Fixed position to cover the viewport without scrolling */
+  top: 0;
+  left: 0;
+}
+
+.infoBackgroundImage {
+  background-image: url('/infoBack1.png'); /* Ensure the path is correct */
+  background-size: cover; /* Cover the entire area */
+  background-position: center; /* Center the background image */
+  height: 100vh; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed; /* Fixed position to cover the viewport without scrolling */
+  top: 0;
+  left: 0;
+}
+
+/* ProjectDetails.module.css */
+
+.board-container {
+  display: flex;
+  gap: 20px;
+}
+
+.board-column {
+  flex: 1;
+  padding: 10px;
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  border-top: 10px solid transparent; /* Default transparent border */
+}
+
+.board-column.todo {
+  border-top-color: #ff9800;
+}
+
+.board-column.in-progress {
+  border-top-color: #0070f3;
+}
+
+.board-column.completed {
+  border-top-color: #4caf50;
+}
+
+.board-card {
+  background-color: white;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button-container {
+  margin-bottom: 20px;
+}
+
+.button-container button {
+  margin-right: 10px;
+}
+
+.workspace-name-container {
+  display: flex;
+  align-items: center;
+}
+
+.workspace-name-container h1 {
+  margin-right: 20px;
+  display: inline-block;
+}
+
+.workspace-name-container .delete-icon {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.workspace-name-container:hover .delete-icon {
+  opacity: 1;
+}
