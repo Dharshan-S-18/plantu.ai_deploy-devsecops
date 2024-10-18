@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     try {
       const listParams = {
         Bucket: process.env.BUCKET_NAME,
-        Prefix: `projects/${id}/`, // Fetch only the files for this project
+        Prefix: `projects/${id}/projectAttachment/`, // Fetch only the files for this project
       };
 
       const data = await s3Client.send(new ListObjectsV2Command(listParams));

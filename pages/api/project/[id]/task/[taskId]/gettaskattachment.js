@@ -1,4 +1,8 @@
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  ListObjectsV2Command,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 
 const s3Client = new S3Client({
   region: process.env.REGION,
@@ -10,6 +14,8 @@ const s3Client = new S3Client({
 
 export default async function handler(req, res) {
   const { id, taskId } = req.query;
+  console.log(id);
+  console.log(taskId);
 
   if (req.method === "GET") {
     try {
