@@ -20,6 +20,7 @@ import {
   MenuItem,
   CircularProgress,
   ListItemIcon,
+  DialogContentText,
 } from "@mui/material";
 import Textarea from "@mui/joy/Textarea";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -44,6 +45,7 @@ import {
   Cancel,
   Delete,
   LinkRounded,
+  Title,
   UploadFile,
 } from "@mui/icons-material";
 
@@ -63,6 +65,18 @@ const EditProjectPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const fileInputRef = useRef(null);
+
+  const [open, setOpen] = useState(false);
+  const [selectedFileKey, setSelectedFileKey] = useState(null);
+
+  const handleClickOpen = (fileKey) => {
+    setSelectedFileKey(fileKey);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   // Fetch the attachments for the project
   useEffect(() => {
@@ -405,21 +419,17 @@ const EditProjectPage = () => {
     }
   };
 
-  const handleDeleteAttachment = async (fileKey) => {
-    if (!confirm("Are you sure you want to delete this file?")) return;
-
+  //Delete Attachment handle
+  const handleConfirmDelete = async (fileKey) => {
     try {
-      const res = await fetch(
-        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment`,
-        {
-          method: "DELETE",
-          body: JSON.stringify({ fileKey }),
-        }
-      );
+      const res = await fetch(`/api/project/${projectId}/attachment`, {
+        method: "DELETE",
+        body: JSON.stringify({ fileKey: selectedFileKey }),
+      });
       const data = await res.json();
       console.log("File Deleted:", data);
-      handleCancelSelection(); // cancel the selection of file
       fetchAttachments(); // Refresh the list of files
+      handleClose();
     } catch (error) {
       console.error("Error Deleting File:", error);
     }
@@ -716,12 +726,16 @@ const EditProjectPage = () => {
             <>
               <Typography>
                 {selectedFile.name}
-                <IconButton onClick={handleCancelSelection}>
-                  <Cancel />
-                </IconButton>
-                <IconButton>
-                  <UploadFile onClick={handleFileUpload} />
-                </IconButton>
+                <Tooltip title="Cancel" arrow>
+                  <Button onClick={handleCancelSelection}>
+                    <Cancel color="error" />
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Upload" arrow>
+                  <Button>
+                    <UploadFile onClick={handleFileUpload} />
+                  </Button>
+                </Tooltip>
               </Typography>
             </>
           )}
@@ -743,13 +757,32 @@ const EditProjectPage = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <Button>
-                        <LinkRounded />
-                      </Button>
+                      <Tooltip title="View" arrow>
+                        <Button>
+                          <LinkRounded />
+                        </Button>
+                      </Tooltip>
                     </a>
-                    <Button onClick={() => handleDeleteAttachment(file.key)}>
-                      <Delete />
-                    </Button>
+                    <Tooltip title="Delete" arrow>
+                      <Button onClick={() => handleClickOpen(file.key)}>
+                        <Delete color="error" />
+                      </Button>
+                    </Tooltip>
+                    <Dialog open={open} onClose={handleClose}>
+                      <DialogTitle>{"Confirm Delete"}</DialogTitle>
+                      <DialogContent>
+                        <DialogContentText>
+                          Are you sure you want to delete this file? This action
+                          cannot be undone.
+                        </DialogContentText>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={handleClose}>Cancel</Button>
+                        <Button onClick={handleConfirmDelete} color="error">
+                          Delete
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                   </Box>
                 ))}
               </Box>

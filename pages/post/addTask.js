@@ -18,7 +18,9 @@ import {
   Paper,
   Grid,
   Alert, // Import Alert component
-  Snackbar, // Import Snackbar component for dismissible alert
+  Snackbar,
+  Tooltip,
+  DialogContentText, // Import Snackbar component for dismissible alert
 } from "@mui/material";
 import { FormControl, FormLabel, Input } from "@mui/joy";
 import CloseIcon from "@mui/icons-material/Close";
@@ -72,6 +74,18 @@ const AddTaskModal = ({
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
   const [attachments, setAttachments] = useState([]);
+
+  const [open, setOpen] = useState(false);
+  const [selectedFileKey, setSelectedFileKey] = useState(null);
+
+  const handleClickOpen = (fileKey) => {
+    setSelectedFileKey(fileKey);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
   // Fetch the attachments for the project
   useEffect(() => {
     fetchAttachments();
@@ -138,6 +152,22 @@ const AddTaskModal = ({
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+    }
+  };
+
+  //Delete Attachment handle
+  const handleConfirmDelete = async (fileKey) => {
+    try {
+      const res = await fetch(`/api/project/${projectId}/attachment`, {
+        method: "DELETE",
+        body: JSON.stringify({ fileKey: selectedFileKey }),
+      });
+      const data = await res.json();
+      console.log("File Deleted:", data);
+      fetchAttachments(); // Refresh the list of files
+      handleClose();
+    } catch (error) {
+      console.error("Error Deleting File:", error);
     }
   };
 
@@ -551,12 +581,16 @@ const AddTaskModal = ({
                     <>
                       <Typography variant="body2">
                         {selectedFile.name}
-                        <IconButton onClick={handleCancelSelection}>
-                          <CancelIcon />
-                        </IconButton>
-                        <IconButton onClick={handleFileUpload}>
-                          <Upload />
-                        </IconButton>
+                        <Tooltip title="Cancel" arrow>
+                          <Button onClick={handleCancelSelection}>
+                            <CancelIcon color="error" />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title="Upload" arrow>
+                          <Button onClick={handleFileUpload}>
+                            <Upload />
+                          </Button>
+                        </Tooltip>
                       </Typography>
                     </>
                   )}
@@ -663,13 +697,38 @@ const AddTaskModal = ({
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              <Button>
-                                <LinkRounded />
-                              </Button>
+                              <Tooltip title="View" arrow>
+                                <Button>
+                                  <LinkRounded />
+                                </Button>
+                              </Tooltip>
                             </a>
-                            <Button>
-                              <Delete />
-                            </Button>
+                            <Tooltip title="Delete" arrow>
+                              <Button>
+                                <Delete
+                                  color="error"
+                                  onClick={() => handleClickOpen(file.key)}
+                                />
+                              </Button>
+                            </Tooltip>
+                            <Dialog open={open} onClose={handleClose}>
+                              <DialogTitle>{"Confirm Delete"}</DialogTitle>
+                              <DialogContent>
+                                <DialogContentText>
+                                  Are you sure you want to delete this file?
+                                  This action cannot be undone.
+                                </DialogContentText>
+                              </DialogContent>
+                              <DialogActions>
+                                <Button onClick={handleClose}>Cancel</Button>
+                                <Button
+                                  onClick={handleConfirmDelete}
+                                  color="error"
+                                >
+                                  Delete
+                                </Button>
+                              </DialogActions>
+                            </Dialog>
                           </Box>
                         ))}
                       </Box>

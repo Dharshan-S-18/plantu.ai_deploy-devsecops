@@ -45,7 +45,7 @@ export default async function handler(req, res) {
       }
 
       const uploadfileId = uuidv4(); // Generate a unique ID for the file
-      const key = `projects/${id}/${uploadfileId}-${file.originalFilename}`; // Create a unique key for the file
+      const key = `projects/${id}/projectAttachment/${uploadfileId}-${file.originalFilename}`; // Create a unique key for the file
 
       try {
         // Ensure file.filepath is defined
