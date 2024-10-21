@@ -704,79 +704,79 @@ export default function Layout({ children }) {
               </Tooltip>
             </Tooltip>
             <Box
-      sx={{
-        maxHeight: '300px', // Set a fixed height for the scrollable area (adjust as needed)
-        overflowY: 'auto', // Enables vertical scrolling
-        scrollbarWidth: 'thin', // For Firefox to control scrollbar width
-        '&::-webkit-scrollbar': {
-          width: '8px', // Custom scrollbar width for WebKit browsers (Chrome, Safari)
-        },
-        '&::-webkit-scrollbar-track': {
-          backgroundColor: '#0d1a33', // Dark blue background for the scrollbar track (similar to the image)
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: '#737e8c', // Grey color for the scrollbar thumb (similar to the image)
-          borderRadius: '10px', // Rounded scrollbar
-        },
-        '&::-webkit-scrollbar-thumb:hover': {
-          backgroundColor: '#8c96a3', // Slightly lighter grey when hovered
-        },
-      }}
-    >
-      {loading ? (
-        <ListItem>
-          <CircularProgress
-            color="inherit"
-            size={24}
-            sx={{ ml: 2, color: "white" }}
-          />
-        </ListItem>
-      ) : (
-        workspaces.map((workspace) => (
-          <Box
-            key={workspace._id}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              '&:hover .workspace-menu-icon': { // Show icon on hover
-                opacity: 1,
-              },
-            }}
-          >
-            <ListItem
-              button
-              onClick={() => handleWorkspaceNameClick(workspace._id)}
-            >
-              <ListItemText
-                primary={workspace.name}
-                sx={{ color: "#ffffff" }}
-              />
-            </ListItem>
-            {/* Three vertical dots icon */}
-            <IconButton
-              className="workspace-menu-icon"
               sx={{
-                opacity: 0, // Hide icon by default
-                transition: 'opacity 0.3s', // Smooth transition on hover
+                maxHeight: '300px', // Set a fixed height for the scrollable area (adjust as needed)
+                overflowY: 'auto', // Enables vertical scrolling
+                scrollbarWidth: 'thin', // For Firefox to control scrollbar width
+                '&::-webkit-scrollbar': {
+                  width: '8px', // Custom scrollbar width for WebKit browsers (Chrome, Safari)
+                },
+                '&::-webkit-scrollbar-track': {
+                  backgroundColor: '#0d1a33', // Dark blue background for the scrollbar track (similar to the image)
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: '#737e8c', // Grey color for the scrollbar thumb (similar to the image)
+                  borderRadius: '10px', // Rounded scrollbar
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  backgroundColor: '#8c96a3', // Slightly lighter grey when hovered
+                },
               }}
-              onClick={(e) => handleMenuClick(e, workspace._id)} // Open menu on click
             >
-              <MoreVertIcon sx={{ color: '#ffffff' }} />
-            </IconButton>
-          </Box>
-        ))
-      )}
+              {loading ? (
+                <ListItem>
+                  <CircularProgress
+                    color="inherit"
+                    size={24}
+                    sx={{ ml: 2, color: "white" }}
+                  />
+                </ListItem>
+              ) : (
+                workspaces.map((workspace) => (
+                  <Box
+                    key={workspace._id}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      '&:hover .workspace-menu-icon': { // Show icon on hover
+                        opacity: 1,
+                      },
+                    }}
+                  >
+                    <ListItem
+                      button
+                      onClick={() => handleWorkspaceNameClick(workspace._id)}
+                    >
+                      <ListItemText
+                        primary={workspace.name}
+                        sx={{ color: "#ffffff" }}
+                      />
+                    </ListItem>
+                    {/* Three vertical dots icon */}
+                    {/* <IconButton
+                      className="workspace-menu-icon"
+                      sx={{
+                        opacity: 0, // Hide icon by default
+                        transition: 'opacity 0.3s', // Smooth transition on hover
+                      }}
+                      onClick={(e) => handleMenuClick(e, workspace._id)} // Open menu on click
+                    >
+                      <MoreVertIcon sx={{ color: '#ffffff' }} />
+                    </IconButton> */}
+                  </Box>
+                ))
+              )}
 
-      {/* Menu for delete option */}
-      {/* <Menu
+              {/* Menu for delete option */}
+              {/* <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
         <MenuItem onClick={handleDelete}>Delete</MenuItem>
       </Menu> */}
-    </Box>
+            </Box>
           </List>
 
           {/* Bottom part of the Drawer */}
