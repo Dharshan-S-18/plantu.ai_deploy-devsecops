@@ -7,6 +7,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
@@ -19,6 +21,14 @@ const SetupS3BucketPage = () => {
     secretAccessKeyId: "",
     region: "",
   });
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSnackClose = () => {
+    setSnackbarOpen(false);
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,24 +42,28 @@ const SetupS3BucketPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          accountId: formData.accountId,
-          subdomain: formData.subdomain,
-          bucketName: formData.bucketName,
-          accessKeyId: formData.accessKeyId,
-          secretAccessKeyId: formData.secretAccessKeyId,
-          region: formData.region,
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         console.log("S3 Bucket credentials saved successfully");
+        setSnackbarMessage("AWS S3 Bucket Credential Stored successfully");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
+        setIsSubmitted(true); // Disable submit on success
+        localStorage.setItem("isSubmitted", "true"); // Save to localStorage
       } else {
         const data = await response.json();
         console.log("Error:", data.message);
+        setSnackbarMessage("Failed to save credentials!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error("Error saving credentials:", error);
+      setSnackbarMessage("Error saving credentials!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
@@ -58,20 +72,23 @@ const SetupS3BucketPage = () => {
     const extractedSubdomain = hostname.split(".")[0];
     const accountId = sessionStorage.getItem("accountId");
 
-    setFormData({
+    setFormData((prevData) => ({
+      ...prevData,
       accountId: accountId || "",
       subdomain: extractedSubdomain || "",
-    });
+    }));
+
+    // Check if form was previously submitted
+    const wasSubmitted = localStorage.getItem("isSubmitted") === "true";
+    setIsSubmitted(wasSubmitted);
   }, []);
 
   return (
     <Box>
-      {/* Page Title */}
       <Typography variant="h5" sx={{ mb: 3 }}>
         Setup Your Own S3 Bucket For File Storage
       </Typography>
 
-      {/* Accordion for Create Bucket */}
       <Accordion sx={{ width: "100%" }}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
@@ -85,7 +102,7 @@ const SetupS3BucketPage = () => {
             Detailed steps for creating an S3 bucket&nbsp;
             <a
               href="https://nikqiktech-my.sharepoint.com/:w:/g/personal/jayesh_kulkarni_nikqik_com/EdALkVzTvU1Kse6fxzBuXV4Bc0Wllpha4vPQ1PlPzVFDYA?e=g8CoLZ"
-              target="_blank" //it opens link in new tab
+              target="_blank"
               rel="noopener noreferrer"
             >
               click here
@@ -94,7 +111,6 @@ const SetupS3BucketPage = () => {
         </AccordionDetails>
       </Accordion>
 
-      {/* Accordion for Credentials Setup */}
       <Accordion sx={{ width: "100%" }}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
@@ -114,18 +130,18 @@ const SetupS3BucketPage = () => {
             }}
           >
             <TextField
-              name="AccountId"
+              name="accountId"
               value={formData.accountId}
               onChange={handleChange}
               required
-              disabled // This makes the field read-only
+              disabled
             />
             <TextField
               name="subdomain"
               value={formData.subdomain}
               onChange={handleChange}
               required
-              disabled // This makes the field read-only
+              disabled
             />
             <TextField
               label="Bucket Name"
@@ -156,12 +172,31 @@ const SetupS3BucketPage = () => {
               required
             />
 
-            <Button type="submit" variant="contained" color="primary">
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={isSubmitted}
+            >
               Submit
             </Button>
           </Box>
         </AccordionDetails>
       </Accordion>
+
+      <Snackbar
+        open={snackbarOpen}
+        onClose={handleSnackClose}
+        autoHideDuration={3000}
+      >
+        <Alert
+          onClose={handleSnackClose}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
