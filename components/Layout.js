@@ -766,8 +766,7 @@ export default function Layout({ children }) {
                         sx={{ color: "#ffffff" }}
                       />
                     </ListItem>
-                    {/* Three vertical dots icon */}
-                    <IconButton
+<IconButton
                       className="workspace-menu-icon"
                       sx={{
                         opacity: 0, // Hide icon by default

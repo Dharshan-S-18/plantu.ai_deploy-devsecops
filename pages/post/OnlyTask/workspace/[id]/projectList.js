@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import {
-  Table,
+  Tooltip,
   TableBody,
   TableCell,
   TableContainer,
@@ -155,16 +155,18 @@ const ProjectTable = () => {
 
   return (
     <Layout>
-      <Box className={styles['workspace-name-container']}>
+      <Box className={styles['workspace-name-container']} sx={{marginTop: -5,}}>
         {/* Workspace Name Display */}
         <h1 onClick={handleWorkspaceNameClick} style={{ cursor: 'pointer' }}>
           {workspaceName}
         </h1>
 
         {/* Delete Icon */}
+        <Tooltip title="Delete WorkSpace" placement="right" arrow>
         <IconButton className={styles['delete-icon']} onClick={handleDeleteClick} aria-label="delete">
           <DeleteIcon color="error" />
         </IconButton>
+        </Tooltip>
       </Box>
       <Box className={styles['button-container']}>
         <Button

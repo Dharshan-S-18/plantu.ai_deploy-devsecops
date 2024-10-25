@@ -485,72 +485,89 @@ const EditProjectPage = () => {
 
   return (
     <Layout>
-      <Box sx={{ width: "100%", p: 0, gap: 0, mb: -1 }}>
-        <Tooltip title="Back" placement="right" arrow>
-          <IconButton onClick={handleBackClick} sx={{ mb: 1 }}>
-            <ArrowBackIosIcon />
-          </IconButton>
-        </Tooltip>
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Textarea
-            variant="plain"
-            size="small"
-            value={projectUpdates.projectName}
-            onChange={handleProjectNameChange}
-            onBlur={handleProjectNameBlur} // Update on blur
-            sx={{ mb: 2, fontSize: "1.25rem", fontWeight: "bold" }}
-          />
-          <Tooltip title="Description" placement="top" arrow>
-            <IconButton onClick={handleDescriptionClick} sx={{ mb: 1 }}>
-              <NotesIcon />
+      <Box sx={{ width: "100%", p: 0, gap: 0, mb: -1, marginTop: -1, }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Tooltip title="Back" placement="right" arrow>
+            <IconButton onClick={handleBackClick} sx={{
+              mb: 1,
+              marginTop: -1,
+              width: 40, // Adjust the width
+              height: 40, // Adjust the height
+              borderRadius: '50%', // Makes it a circle
+              border: '2px solid', // Border width
+              borderColor: 'primary.main', // Border color
+              backgroundColor: 'transparent', // No fill color
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              '&:hover': {
+                borderColor: 'primary.dark', // Change border color on hover
+              },
+            }}>
+              <ArrowBackIosIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Assignee" placement="top" arrow>
-            <IconButton onClick={handleAgentClick} sx={{ mb: 1 }}>
-              <PersonIcon />
-            </IconButton>
-          </Tooltip>
-          {projectUpdates.assignedAgent && (
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {projectUpdates.assignedAgent}
-            </Typography>
-          )}
-          <Tooltip title="Priority" placement="top" arrow>
-            <IconButton
-              onClick={handlePriorityClick}
-              sx={{ mb: 1, color: getPriorityIconColor() }}
-            >
-              <FlagIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Date" placement="top" arrow>
-            <IconButton onClick={handleDateClick} sx={{ mb: 1 }}>
-              <DateRangeIcon />
-            </IconButton>
-          </Tooltip>
-          {projectUpdates.startDate && (
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {`Start: ${formatDate(projectUpdates.startDate)}`}
-            </Typography>
-          )}
-          {projectUpdates.dueDate && (
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {`Due: ${formatDate(projectUpdates.dueDate)}`}
-            </Typography>
-          )}
-          <Tooltip title="Delete Project" placement="top" arrow>
-            <IconButton onClick={handleDeleteClick} sx={{ mb: 1 }}>
-              <DeleteIcon color="error" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Attachment" placement="top" arrow>
-            <IconButton sx={{ mb: 1 }} onClick={() => setAttachmentOpen(true)}>
-              <Attachment />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}> {/* Added margin left for spacing */}
+            <Textarea
+              variant="plain"
+              size="small"
+              value={projectUpdates.projectName}
+              onChange={handleProjectNameChange}
+              onBlur={handleProjectNameBlur} // Update on blur
+              sx={{ mb: 2, fontSize: '1.25rem', fontWeight: 'bold' }}
+            />
+            <Tooltip title="Description" placement="top" arrow>
+              <IconButton onClick={handleDescriptionClick} sx={{ mb: 1 }}>
+                <NotesIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Assignee" placement="top" arrow>
+              <IconButton onClick={handleAgentClick} sx={{ mb: 1 }}>
+                <PersonIcon />
+              </IconButton>
+            </Tooltip>
+            {projectUpdates.assignedAgent && (
+              <Typography variant="body2" sx={{ ml: 1 }}>
+                {projectUpdates.assignedAgent}
+              </Typography>
+            )}
+            <Tooltip title="Priority" placement="top" arrow>
+              <IconButton
+                onClick={handlePriorityClick}
+                sx={{ mb: 1, color: getPriorityIconColor() }}
+              >
+                <FlagIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Date" placement="top" arrow>
+              <IconButton onClick={handleDateClick} sx={{ mb: 1 }}>
+                <DateRangeIcon />
+              </IconButton>
+            </Tooltip>
+            {projectUpdates.startDate && (
+              <Typography variant="body2" sx={{ ml: 1 }}>
+                {`Start: ${formatDate(projectUpdates.startDate)}`}
+              </Typography>
+            )}
+            {projectUpdates.dueDate && (
+              <Typography variant="body2" sx={{ ml: 1 }}>
+                {`Due: ${formatDate(projectUpdates.dueDate)}`}
+              </Typography>
+            )}
+            <Tooltip title="Delete Project" placement="top" arrow>
+              <IconButton onClick={handleDeleteClick} sx={{ mb: 1 }}>
+                <DeleteIcon color="error" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Attachment" placement="top" arrow>
+              <IconButton sx={{ mb: 1 }} onClick={() => setAttachmentOpen(true)}>
+                <Attachment />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
-        <Divider />
+        <Divider sx={{ ml: -3 }} />
 
         <Tabs
           value={activeSection}

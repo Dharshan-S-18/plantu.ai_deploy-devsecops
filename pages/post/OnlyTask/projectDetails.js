@@ -174,7 +174,7 @@ const ProjectTable = () => {
         <Button variant="text" startIcon={<Grid3x3Icon />} color="primary" onClick={() => setViewMode('grid')} style={{ marginLeft: '10px' }}>
           Grid View
         </Button> */}
-        <Button variant="contained" startIcon={<AddIcon />} color="primary" onClick={handleCreateProjectClick} style={{ marginLeft: '10px' }}>
+        <Button variant="contained" startIcon={<AddIcon />} color="primary" onClick={handleCreateProjectClick} style={{ marginLeft: '10px', marginTop: 0, }}>
           Create Project
         </Button>
       </div>
