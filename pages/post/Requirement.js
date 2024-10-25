@@ -21,6 +21,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CancelIcon from "@mui/icons-material/Close";
@@ -31,7 +34,9 @@ import {
   LinkRounded,
   Upload,
   UploadFile,
+  UploadRounded,
 } from "@mui/icons-material";
+import { green } from "@mui/material/colors";
 
 const generateSequentialId = (lastId) => {
   const baseId = "RQ";
@@ -62,6 +67,14 @@ const RequirementForm = ({
 
   const [open, setOpen] = useState(false);
   const [selectedFileKey, setSelectedFileKey] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // sucess or error
+  const [uploading, setUploading] = useState(false);
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
 
   const handleClickOpen = (fileKey) => {
     setSelectedFileKey(fileKey);
@@ -116,6 +129,7 @@ const RequirementForm = ({
   //Upload file Attachment handle
   const handleFileUpload = async () => {
     if (!selectedFile) return;
+    setUploading(true);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -133,13 +147,24 @@ const RequirementForm = ({
         const data = await response.json();
         console.log("File uploaded:", data.url);
         console.log("Unique file ID:", data.uploadfileId); // You can use this ID for further actions
-        handleCancelSelection();
         fetchAttachments();
+        setSnackbarMessage("File uploaded successfully");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
       } else {
         console.error("File upload failed");
+        setSnackbarMessage("file uploaded failed!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+      setSnackbarMessage("Error uploading file!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUploading(false);
+      handleCancelSelection();
     }
   };
 
@@ -157,8 +182,14 @@ const RequirementForm = ({
       console.log("File Deleted:", data);
       fetchAttachments(); // Refresh the list of files
       handleClose(); // Close the dialog after delete
+      setSnackbarMessage("File Deleted successfully");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error Deleting File:", error);
+      setSnackbarMessage("Error Deleting File!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
@@ -352,8 +383,12 @@ const RequirementForm = ({
                       </Button>
                     </Tooltip>
                     <Tooltip title="Upload" arrow>
-                      <Button>
-                        <Upload onClick={handleFileUpload} />
+                      <Button onClick={handleFileUpload} disabled={uploading}>
+                        {uploading ? (
+                          <CircularProgress size={24} sx={{ color: green }} />
+                        ) : (
+                          <UploadRounded />
+                        )}
                       </Button>
                     </Tooltip>
                   </Typography>
@@ -439,6 +474,22 @@ const RequirementForm = ({
               </Grid>
             </>
           )}
+
+          {/* Snackbar messages */}
+          <Snackbar
+            open={snackbarOpen}
+            onClose={handleSnackbarClose}
+            autoHideDuration={3000}
+          >
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbarSeverity}
+              anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
 
           {/* Submit Button */}
           <Button type="submit" variant="contained" color="primary">

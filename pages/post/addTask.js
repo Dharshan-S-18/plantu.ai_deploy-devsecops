@@ -20,7 +20,8 @@ import {
   Alert, // Import Alert component
   Snackbar,
   Tooltip,
-  DialogContentText, // Import Snackbar component for dismissible alert
+  DialogContentText,
+  CircularProgress, // Import Snackbar component for dismissible alert
 } from "@mui/material";
 import { FormControl, FormLabel, Input } from "@mui/joy";
 import CloseIcon from "@mui/icons-material/Close";
@@ -36,7 +37,7 @@ import SubtaskModal from "./Subtask";
 import axios from "axios";
 import dayjs from "dayjs";
 import { formatDistanceToNow } from "date-fns";
-import { Delete, LinkRounded, Upload } from "@mui/icons-material";
+import { Delete, LinkRounded, Upload, UploadFile } from "@mui/icons-material";
 
 const AddTaskModal = ({
   projectId,
@@ -74,6 +75,14 @@ const AddTaskModal = ({
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
   const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // success or error
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
 
   const [open, setOpen] = useState(false);
   const [selectedFileKey, setSelectedFileKey] = useState(null);
@@ -128,6 +137,7 @@ const AddTaskModal = ({
   };
   const handleFileUpload = async () => {
     if (!selectedFile) return;
+    setUploading(true);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -145,13 +155,24 @@ const AddTaskModal = ({
         const data = await response.json();
         console.log("File uploaded:", data.url);
         console.log("Unique file ID:", data.uploadfileId); // You can use this ID for further actions
-        handleCancelSelection();
         fetchAttachments();
+        setSnackbarMessage("File uploaded successfully!");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
       } else {
         console.error("File upload failed");
+        setSnackbarMessage("File upload failed!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+      setSnackbarMessage("Error uploading file!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUploading(false);
+      handleCancelSelection();
     }
   };
 
@@ -164,10 +185,16 @@ const AddTaskModal = ({
       });
       const data = await res.json();
       console.log("File Deleted:", data);
-      fetchAttachments(); // Refresh the list of files
       handleClose();
+      fetchAttachments(); // Refresh the list of files
+      setSnackbarMessage("File Deleted successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error Deleting File:", error);
+      setSnackbarMessage("Error Deleting File!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
@@ -587,17 +614,26 @@ const AddTaskModal = ({
                           </Button>
                         </Tooltip>
                         <Tooltip title="Upload" arrow>
-                          <Button onClick={handleFileUpload}>
-                            <Upload />
+                          <Button
+                            onClick={handleFileUpload}
+                            disabled={uploading}
+                          >
+                            {uploading ? (
+                              <CircularProgress
+                                size={24}
+                                sx={{ color: "green" }}
+                              />
+                            ) : (
+                              <UploadFile />
+                            )}
                           </Button>
                         </Tooltip>
                       </Typography>
                     </>
                   )}
                 </Grid>
-              </Grid>
 
-              {/* <FormControl sx={{ mb: 2 }}>
+                {/* <FormControl sx={{ mb: 2 }}>
                 <FormLabel>Detailed Description</FormLabel>
                 <Input
                   fullWidth
@@ -609,9 +645,9 @@ const AddTaskModal = ({
                 />
               </FormControl> */}
 
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  {/* <FormControl sx={{ mb: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    {/* <FormControl sx={{ mb: 2 }}>
                     <FormLabel>Dependency</FormLabel>
                     <Input
                       fullWidth
@@ -621,20 +657,20 @@ const AddTaskModal = ({
                     />
                   </FormControl> */}
 
-                  <FormControl sx={{ mb: 2 }}>
-                    <FormLabel>Allocated Effort (Hours)</FormLabel>
-                    <Input
-                      fullWidth
-                      type="number"
-                      name="allocatedEffort"
-                      value={taskData.allocatedEffort}
-                      onChange={(e) =>
-                        handleInputChange("allocatedEffort", e.target.value)
-                      }
-                    />
-                  </FormControl>
-                </Grid>
-                {/* <Grid item xs={6}>
+                    <FormControl sx={{ mb: 2 }}>
+                      <FormLabel>Allocated Effort (Hours)</FormLabel>
+                      <Input
+                        fullWidth
+                        type="number"
+                        name="allocatedEffort"
+                        value={taskData.allocatedEffort}
+                        onChange={(e) =>
+                          handleInputChange("allocatedEffort", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                  </Grid>
+                  {/* <Grid item xs={6}>
                   <FormControl sx={{ mb: 2 }}>
                     <FormLabel>Allocated Effort (Hours)</FormLabel>
                     <Input
@@ -646,19 +682,20 @@ const AddTaskModal = ({
                     />
                   </FormControl>
                 </Grid> */}
-                <Grid item xs={6}>
-                  <FormControl sx={{ mb: 2 }}>
-                    <FormLabel>Actual Effort (Hours)</FormLabel>
-                    <Input
-                      fullWidth
-                      type="number"
-                      name="actualEffort"
-                      value={taskData.actualEffort}
-                      onChange={(e) =>
-                        handleInputChange("actualEffort", e.target.value)
-                      }
-                    />
-                  </FormControl>
+                  <Grid item xs={6}>
+                    <FormControl sx={{ mb: 2 }}>
+                      <FormLabel>Actual Effort (Hours)</FormLabel>
+                      <Input
+                        fullWidth
+                        type="number"
+                        name="actualEffort"
+                        value={taskData.actualEffort}
+                        onChange={(e) =>
+                          handleInputChange("actualEffort", e.target.value)
+                        }
+                      />
+                    </FormControl>
+                  </Grid>
                 </Grid>
               </Grid>
 
@@ -825,6 +862,21 @@ const AddTaskModal = ({
           </Grid>
         </Box>
       </Box>
+      {/* Snackbar for showing messages */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
 
       {/* Footer */}
       <Box

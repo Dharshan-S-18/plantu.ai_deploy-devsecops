@@ -34,7 +34,7 @@ import {
   TextField,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
@@ -243,13 +243,20 @@ export default function Layout({ children }) {
     setIsLoading(true);
     const portNumber = window.location.port;
     const hostname = window.location.hostname;
-    const extractedSubdomain = hostname.split('.')[0];
+    const extractedSubdomain = hostname.split(".")[0];
 
     try {
       const response = await fetch("/api/auth/addAgent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agentName, agentEmail, accountId, orgName, subdomain: extractedSubdomain, portNumber }),
+        body: JSON.stringify({
+          agentName,
+          agentEmail,
+          accountId,
+          orgName,
+          subdomain: extractedSubdomain,
+          portNumber,
+        }),
       });
 
       const data = await response.json();
@@ -303,7 +310,7 @@ export default function Layout({ children }) {
     } else if (viewName === "agent") {
       router.push("/post/userManagement");
     } else if (viewName === "settings") {
-      router.push("/settings");
+      router.push("/post/settings/drawer"); //drawer.js
     } else if (viewName === "project") {
       router.push("/post/projectDetails");
     }
@@ -314,7 +321,7 @@ export default function Layout({ children }) {
     const hostname = window.location.hostname;
     const portNumber = window.location.port;
     const redirectUrl =
-      process.env.NODE_ENV === 'development'
+      process.env.NODE_ENV === "development"
         ? `http://${hostname}:${portNumber}/login`
         : `https://${hostname}/login`;
 
@@ -340,13 +347,15 @@ export default function Layout({ children }) {
 
   const fetchWorkspaces = async () => {
     setLoading(true);
-    const accountId = sessionStorage.getItem('accountId');
+    const accountId = sessionStorage.getItem("accountId");
     if (!accountId) {
-      console.error('No accountId found in sessionStorage');
+      console.error("No accountId found in sessionStorage");
       return;
     }
     try {
-      const response = await axios.get(`/api/OnlyTaskApi/workSpace?accountId=${accountId}`); // Replace with your API endpoint
+      const response = await axios.get(
+        `/api/OnlyTaskApi/workSpace?accountId=${accountId}`
+      ); // Replace with your API endpoint
       setWorkspaces(response.data.data);
       console.log(response.data.data);
     } catch (error) {
@@ -572,8 +581,8 @@ export default function Layout({ children }) {
               <ListItem
                 button
                 onClick={(event) => {
-                  handleProjectMenuClick(event);  // Pass the event object
-                  handleDrawerToggle();           // Toggle the drawer
+                  handleProjectMenuClick(event); // Pass the event object
+                  handleDrawerToggle(); // Toggle the drawer
                 }}
                 sx={{
                   "&:hover": {
@@ -678,8 +687,8 @@ export default function Layout({ children }) {
               <ListItem
                 button
                 onClick={() => {
-                  handleWorkspaceClick();  // Fetch the workspaces
-                  handleDrawerToggle();    // Toggle the drawer
+                  handleWorkspaceClick(); // Fetch the workspaces
+                  handleDrawerToggle(); // Toggle the drawer
                 }}
                 sx={{
                   "&:hover": {
@@ -690,7 +699,10 @@ export default function Layout({ children }) {
                 <ListItemIcon sx={{ color: "#ffffff" }}>
                   <WorkspacesIcon />
                 </ListItemIcon>
-                <ListItemText primary="Workspace" sx={{ color: "#ffffff", ml: -2 }} />
+                <ListItemText
+                  primary="Workspace"
+                  sx={{ color: "#ffffff", ml: -2 }}
+                />
               </ListItem>
               {/* Add Icon Button for creating new Workspace */}
               <Tooltip title="Create Workspace" placement="right" arrow>
@@ -704,79 +716,80 @@ export default function Layout({ children }) {
               </Tooltip>
             </Tooltip>
             <Box
-      sx={{
-        maxHeight: '300px', // Set a fixed height for the scrollable area (adjust as needed)
-        overflowY: 'auto', // Enables vertical scrolling
-        scrollbarWidth: 'thin', // For Firefox to control scrollbar width
-        '&::-webkit-scrollbar': {
-          width: '8px', // Custom scrollbar width for WebKit browsers (Chrome, Safari)
-        },
-        '&::-webkit-scrollbar-track': {
-          backgroundColor: '#0d1a33', // Dark blue background for the scrollbar track (similar to the image)
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: '#737e8c', // Grey color for the scrollbar thumb (similar to the image)
-          borderRadius: '10px', // Rounded scrollbar
-        },
-        '&::-webkit-scrollbar-thumb:hover': {
-          backgroundColor: '#8c96a3', // Slightly lighter grey when hovered
-        },
-      }}
-    >
-      {loading ? (
-        <ListItem>
-          <CircularProgress
-            color="inherit"
-            size={24}
-            sx={{ ml: 2, color: "white" }}
-          />
-        </ListItem>
-      ) : (
-        workspaces.map((workspace) => (
-          <Box
-            key={workspace._id}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              '&:hover .workspace-menu-icon': { // Show icon on hover
-                opacity: 1,
-              },
-            }}
-          >
-            <ListItem
-              button
-              onClick={() => handleWorkspaceNameClick(workspace._id)}
-            >
-              <ListItemText
-                primary={workspace.name}
-                sx={{ color: "#ffffff" }}
-              />
-            </ListItem>
-            {/* Three vertical dots icon */}
-            <IconButton
-              className="workspace-menu-icon"
               sx={{
-                opacity: 0, // Hide icon by default
-                transition: 'opacity 0.3s', // Smooth transition on hover
+                maxHeight: "300px", // Set a fixed height for the scrollable area (adjust as needed)
+                overflowY: "auto", // Enables vertical scrolling
+                scrollbarWidth: "thin", // For Firefox to control scrollbar width
+                "&::-webkit-scrollbar": {
+                  width: "8px", // Custom scrollbar width for WebKit browsers (Chrome, Safari)
+                },
+                "&::-webkit-scrollbar-track": {
+                  backgroundColor: "#0d1a33", // Dark blue background for the scrollbar track (similar to the image)
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "#737e8c", // Grey color for the scrollbar thumb (similar to the image)
+                  borderRadius: "10px", // Rounded scrollbar
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  backgroundColor: "#8c96a3", // Slightly lighter grey when hovered
+                },
               }}
-              onClick={(e) => handleMenuClick(e, workspace._id)} // Open menu on click
             >
-              <MoreVertIcon sx={{ color: '#ffffff' }} />
-            </IconButton>
-          </Box>
-        ))
-      )}
+              {loading ? (
+                <ListItem>
+                  <CircularProgress
+                    color="inherit"
+                    size={24}
+                    sx={{ ml: 2, color: "white" }}
+                  />
+                </ListItem>
+              ) : (
+                workspaces.map((workspace) => (
+                  <Box
+                    key={workspace._id}
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      "&:hover .workspace-menu-icon": {
+                        // Show icon on hover
+                        opacity: 1,
+                      },
+                    }}
+                  >
+                    <ListItem
+                      button
+                      onClick={() => handleWorkspaceNameClick(workspace._id)}
+                    >
+                      <ListItemText
+                        primary={workspace.name}
+                        sx={{ color: "#ffffff" }}
+                      />
+                    </ListItem>
+                    {/* Three vertical dots icon */}
+                    <IconButton
+                      className="workspace-menu-icon"
+                      sx={{
+                        opacity: 0, // Hide icon by default
+                        transition: "opacity 0.3s", // Smooth transition on hover
+                      }}
+                      onClick={(e) => handleMenuClick(e, workspace._id)} // Open menu on click
+                    >
+                      <MoreVertIcon sx={{ color: "#ffffff" }} />
+                    </IconButton>
+                  </Box>
+                ))
+              )}
 
-      {/* Menu for delete option */}
-      {/* <Menu
+              {/* Menu for delete option */}
+              {/* <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
         <MenuItem onClick={handleDelete}>Delete</MenuItem>
       </Menu> */}
-    </Box>
+            </Box>
           </List>
 
           {/* Bottom part of the Drawer */}
@@ -787,6 +800,7 @@ export default function Layout({ children }) {
 
             <Tooltip title="Settings" placement="right">
               <ListItem
+                onClick={() => handleNavigation("settings")}
                 button
                 sx={{
                   bgcolor: selected === "settings" ? "#1976d2" : "transparent",
@@ -898,7 +912,10 @@ export default function Layout({ children }) {
 
       {/* Project Modal */}
       <ProjectPage open={modalOpen} handleClose={() => setModalOpen(false)} />
-      <WorkspaceForm open={workspacMmodalOpen} handleClose={() => setWorkspaceModalOpen(false)} />
+      <WorkspaceForm
+        open={workspacMmodalOpen}
+        handleClose={() => setWorkspaceModalOpen(false)}
+      />
     </Box>
   );
 }
