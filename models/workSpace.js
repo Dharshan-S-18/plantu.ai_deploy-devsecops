@@ -33,11 +33,13 @@ const TaskSchema = new mongoose.Schema({
   dueDate: { type: Date },
   priority: { type: String },
   status: { type: String },
+  relation: [{ type: String }],
   dependency: { type: String },
   comments: [CommentSchema],
   allocatedEffort: { type: String }, // Store time in HH:mm:ss format
   actualEffort: { type: String },       // Field for additional notes
   description: { type: String }, // Field for description
+  labels: [{ type: String }],
   checklist: [
     {
       text: { type: String, required: true },
@@ -62,7 +64,13 @@ const ProjectSchema = new mongoose.Schema({
   //   actualBudget: { type: Number },
   //   budgetEndDate: { type: Date },
   statusList: [StatusSchema], // Embed statusSchema here
-  tasks: [TaskSchema] // Embed Task schema here
+  tasks: [TaskSchema], // Embed Task schema here
+  labels: [
+    {
+      name: { type: String, required: true },
+      color: { type: String, default: "#FFFFFF" }, // Optional, for color coding labels
+    },
+  ],
 });
 
 // Define the Workspace Schema
