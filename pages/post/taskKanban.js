@@ -1,5 +1,6 @@
 // kanbanTask.js
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { Box, Typography, TextField, Avatar, Paper, Tooltip, Chip, IconButton, CircularProgress, Modal } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { styled } from '@mui/system';
@@ -84,6 +85,8 @@ const KanbanView = ({ projectId }) => {
     'Completed': false,
   });
   const [loading, setLoading] = useState(false); // State to manage loading
+  const router = useRouter();
+  const taskId = router.query.taskId || null;
 
   // Fetch tasks from API
   const fetchTasks = async () => {
@@ -156,17 +159,28 @@ const KanbanView = ({ projectId }) => {
 
   // Single-click to open modal for editing
   const handleSingleClick = (task) => {
-    if (clickTimer) {
-        clearTimeout(clickTimer);
-        setClickTimer(null);
-    }
+    setSelectedTask(task);
+    setIsModalOpen(true);
+    
+    // Update the URL with task ID without reloading the page
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, taskId: task._id },
+    }, undefined, { shallow: true }); // `shallow: true` to prevent page reload
+  };
 
-    const timer = setTimeout(() => {
-        setSelectedTask(task);
-        setIsModalOpen(true);
-    }, 200);
-    setClickTimer(timer);
-};
+   // Handle closing modal and remove taskId from the URL
+   const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTask(null);
+
+    // Remove the task ID from the URL when the modal is closed
+    const { taskId, ...restQuery } = router.query; // Destructure to remove taskId
+    router.push({
+      pathname: router.pathname,
+      query: { ...restQuery },
+    }, undefined, { shallow: true });
+  };
 
   const handleDoubleClick = (task) => {
     setEditTaskId(task._id);
@@ -267,8 +281,8 @@ const KanbanView = ({ projectId }) => {
                                         task.priority === 'High'
                                           ? 'error'
                                           : task.priority === 'Medium'
-                                          ? 'warning'
-                                          : 'default'
+                                            ? 'warning'
+                                            : 'default'
                                       }
                                       size="small"
                                     />
@@ -299,14 +313,14 @@ const KanbanView = ({ projectId }) => {
       </DragDropContext>
 
       {/* AddTask Modal */}
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        
-          <AddTask
-            projectId={projectId}
-            task={selectedTask} // Pass selected task or null for new task
-            onClose={() => setIsModalOpen(false)}
-          />
-        
+      <Modal open={Boolean(taskId)} onClose={() => setIsModalOpen(false)}>
+
+        <AddTask
+          projectId={projectId}
+          task={selectedTask} // Pass selected task or null for new task
+          onClose={handleCloseModal}
+        />
+
       </Modal>
     </>
   );

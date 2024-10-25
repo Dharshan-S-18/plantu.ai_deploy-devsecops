@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import {
   Button,
   Modal,
@@ -14,7 +15,7 @@ import {
   IconButton,
   Typography,
   Alert,
-  Snackbar
+  Snackbar, CircularProgress,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import axios from 'axios';
@@ -40,30 +41,68 @@ const TaskTab = ({ projectId }) => {
   const [selectedSubtask, setSelectedSubtask] = useState(null); // New state to manage selected subtask
   const [isSubtaskModalOpen, setIsSubtaskModalOpen] = useState(false); // New state to control subtask modal
   const [alert, setAlert] = useState({ message: '', type: '', open: false }); // State for alert
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { taskId } = router.query; // Retrieve taskId from URL
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await axios.get(`/api/project/${projectId}/task`);
-        setTasks(response.data.tasks); // Ensure your response data matches this structure
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-      }
-    };
-
+  useEffect(() => {    
     if (projectId) {
       fetchTasks();
     }
   }, [projectId]);
 
+  useEffect(() => {
+    // Automatically open the modal if taskId exists in the URL
+    if (taskId && tasks.length > 0) {
+      const task = tasks.find((t) => t._id === taskId);
+      if (task) {
+        handleModalOpen(task); // Open the modal with the task
+      }
+    }
+  }, [taskId, tasks]);
+
+  const fetchTasks = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`/api/project/${projectId}/task`);
+      setTasks(response.data.tasks); // Ensure your response data matches this structure
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }finally {
+      setIsLoading(false); // Stop loading after request completes
+    }
+  };
+
+
   const handleModalOpen = (task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
+
+    // Update the URL with the task ID, keeping the current view
+    router.push(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, taskId: task ? task._id : 'new' }, // Use 'new' for adding a new task
+      },
+      undefined,
+      { shallow: true }
+    );
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
     setSelectedTask(null);
+
+    // Remove taskId from the URL when closing the modal
+    const { taskId, ...restQuery } = router.query;
+    router.push(
+      {
+        pathname: router.pathname,
+        query: restQuery, // Keep other query params, but remove taskId
+      },
+      undefined,
+      { shallow: true }
+    );
   };
 
   const handleExpandClick = (taskId, event) => {
@@ -95,19 +134,17 @@ const TaskTab = ({ projectId }) => {
   const handleTaskCreated = (message, type, taskData) => {
     setAlert({ message, type, open: true }); // Set the alert with message and type
 
-    if (type === 'success' && taskData) {
-      setTasks((prevTasks) => [...prevTasks, taskData]); // Add the new task to the list if success
+    if (type === 'success') {
+      fetchTasks(); // Refetch tasks after a successful creation
     }
   };
 
   // Function to handle task updates
   const handleTaskUpdated = (message, type, updatedTask) => {
     setAlert({ message, type, open: true }); // Set the alert with message and type
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task._id === updatedTask._id ? updatedTask : task
-      )
-    ); // Replace the old task with the updated one
+    if (type === 'success') {
+      fetchTasks(); // Refetch tasks after a successful update
+    }
   };
 
   const handleAlertClose = () => {
@@ -154,7 +191,13 @@ const TaskTab = ({ projectId }) => {
         </Button> */}
       </Box>
 
-      {view === 'kanban' ? (
+      {/* Loading spinner */}
+      {isLoading ? (
+        <Box display="flex" justifyContent="center" margin={2}>
+          <CircularProgress /> {/* Show loading indicator */}
+        </Box>
+      ) : (
+      view === 'kanban' ? (
         <KanbanView tasks={tasks} projectId={projectId} />
       ) : view === 'table' ? (
         <TableContainer component={Paper}>
@@ -238,7 +281,7 @@ const TaskTab = ({ projectId }) => {
         <GanttChartView projectId={projectId} task={selectedTask} /> // Render the Gantt chart view
       ) : view === 'calendar' ? (
         <CalendarView projectId={projectId} task={selectedTask} />
-      ) : null}
+      ) : null )}
 
       <Modal open={isModalOpen} onClose={handleModalClose}>
         <AddTask projectId={projectId} task={selectedTask} onClose={handleModalClose} onTaskCreated={handleTaskCreated} onTaskUpdated={handleTaskUpdated} />

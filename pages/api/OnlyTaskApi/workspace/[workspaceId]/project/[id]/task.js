@@ -25,6 +25,7 @@ export default async function handler(req, res) {
           actualEffort,
           checklist,
           status,
+          relation,
         } = req.body;
 
         // Find the workspace and the project within it
@@ -53,6 +54,7 @@ export default async function handler(req, res) {
           actualEffort,
           checklist,
           status,
+          relation,
         };
 
         project.tasks.push(newTask); // Add new task to the project

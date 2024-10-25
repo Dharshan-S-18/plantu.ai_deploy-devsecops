@@ -106,9 +106,11 @@ export default async function handler(req, res) {
         task.comments = req.body.comments || task.comments;
         task.checklist = req.body.checklist || task.checklist;
         task.allocatedEffort = req.body.allocatedEffort || task.allocatedEffort;
-        task.description = req.body.description || task.description;
         task.actualEffort = req.body.actualEffort || task.actualEffort;
+        task.description = req.body.description || task.description;
         task.status = req.body.status || task.status;
+        task.relation = req.body.relation || task.relation;
+        task.labels = req.body.labels || task.labels;
 
         // Save the updated workspace document
         await workspace.save();

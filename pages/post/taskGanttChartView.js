@@ -22,6 +22,7 @@ const GanttChartView = ({ workspaceId, projectId }) => {
   const [tasks, setTasks] = useState([]); // State to keep track of tasks
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
   const router = useRouter();
+  const taskId = router.query.taskId || null; // Extract taskId from the URL
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const initializeGantt = async () => {
@@ -128,12 +129,21 @@ const GanttChartView = ({ workspaceId, projectId }) => {
           status: task.status,
           projectId: task.project, // Include project ID
           taskNumber: task.taskNumber, // Include task number
-          checklist:task.checklist,
+          checklist: task.checklist,
           comments: task.comments,
           allocatedEffort: task.allocatedEffort,
           actualEffort: task.actualEffort,
-          priority:task.priority,
+          priority: task.priority,
         }); // Set the selected task to state
+        // Update URL with the task ID
+        router.push(
+          {
+            pathname: router.pathname,
+            query: { ...router.query, taskId: id }, // Add taskId to the query params
+          },
+          undefined,
+          { shallow: true } // Use shallow routing to avoid a full page reload
+        );
         setIsModalOpen(true); // Open the AddTaskModal
         // router.push(
         //   `/post/OnlyTask/workspace/${workspaceId}/projects/${projectId}/edit?tab=Gantt&taskId=${id}`
@@ -166,7 +176,7 @@ const GanttChartView = ({ workspaceId, projectId }) => {
         comments: task.comments,
         allocatedEffort: task.allocatedEffort,
         actualEffort: task.actualEffort,
-        priority:task.priority,
+        priority: task.priority,
       }));
       console.log(tasks);
 
@@ -210,9 +220,16 @@ const GanttChartView = ({ workspaceId, projectId }) => {
 
   const handleCloseTaskModal = () => {
     setOpenTaskModal(false); // Close the modal
-    // router.push(
-    //   `/post/OnlyTask/workspace/${workspaceId}/projects/${projectId}/edit?tab=Gantt`
-    // );
+    // Remove taskId from the URL when closing the modal
+    const { taskId, ...restQuery } = router.query;
+    router.push(
+      {
+        pathname: router.pathname,
+        query: restQuery,
+      },
+      undefined,
+      { shallow: true } // Shallow routing to avoid a page reload
+    );
     setSelectedTask(null); // Clear the selected task
   };
 
@@ -233,28 +250,22 @@ const GanttChartView = ({ workspaceId, projectId }) => {
       <div ref={ganttContainer} style={{ width: '100%', height: '400px' }} />
 
       {/* AddTaskModal for Editing Task */}
-      {router.query.taskId && (
-        <AddTaskModal
-          workspaceId={workspaceId}
-          projectId={projectId}
-          taskId={router.query.taskId}
-          onClose={handleCloseTaskModal}
-          open={true}
-          onTaskChange={handleTaskChange}
-        />
+      {openTaskModal && (
+        <Modal open={openTaskModal} onClose={handleCloseTaskModal}>
+          <AddTaskModal
+            projectId={projectId}
+            task={selectedTask}
+            onClose={handleCloseTaskModal}
+          />
+        </Modal>
       )}
-
-<Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-  
-    <AddTaskModal
-      projectId={projectId}
-      task={selectedTask} // Pass the full task object only if it exists
-      onClose={() => setIsModalOpen(false)}
-    />
-  
-</Modal>
-      
-
+      <Modal open={Boolean(taskId)} onClose={() => setIsModalOpen(false)}>
+        <AddTaskModal
+          projectId={projectId}
+          task={selectedTask} // Pass the full task object only if it exists
+          onClose={() => setIsModalOpen(false)}
+        />
+      </Modal>
       {/* Snackbar for alerts */}
       <Snackbar open={alert.open} autoHideDuration={6000} onClose={handleAlertClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert variant="filled" onClose={handleAlertClose} severity={alert.severity}>

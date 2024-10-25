@@ -32,10 +32,12 @@ const TaskSchema = new mongoose.Schema({
   endDate: { type: Date },
   dueDate: { type: Date },
   priority: { type: String },
+  actualEffort: { type: Number},
+  allocatedEffort: { type: Number},
   status: { type: String },
+  relation: [{ type: String }],
   dependency: { type: String },
   comments: [CommentSchema],
-  allocatedEffort: { type: String }, // Store time in HH:mm:ss format
   actualEffort: { type: String }, // Field for additional notes
   description: { type: String }, // Field for description
   checklist: [
