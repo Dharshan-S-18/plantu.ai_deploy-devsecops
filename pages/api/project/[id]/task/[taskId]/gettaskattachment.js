@@ -28,9 +28,7 @@ export default async function handler(req, res) {
       const data = await s3Client.send(new ListObjectsV2Command(listParams));
 
       if (!data.Contents || data.Contents.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "No files found for this task." });
+        return res.status(200).json([]); // No files found
       }
 
       // Map the relevant files to their URLs
