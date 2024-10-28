@@ -16,6 +16,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { FormControl, Input, FormLabel } from "@mui/joy";
 import EditIcon from "@mui/icons-material/Edit";
@@ -28,7 +31,7 @@ import dynamic from "next/dynamic"; // Import next/dynamic for dynamic imports
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false }); // Dynamic import for ReactQuill
 import "react-quill/dist/quill.snow.css"; // Import Quill styles
-import { Delete, LinkRounded, Upload } from "@mui/icons-material";
+import { Delete, LinkRounded, Upload, UploadFile } from "@mui/icons-material";
 
 const Details = ({ projectId }) => {
   const [project, setProject] = useState(null);
@@ -50,6 +53,14 @@ const Details = ({ projectId }) => {
 
   const [open, setOpen] = useState(false);
   const [selectedFileKey, setSelectedFileKey] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // success or error
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
 
   const handleClickOpen = (fileKey) => {
     setSelectedFileKey(fileKey);
@@ -101,6 +112,7 @@ const Details = ({ projectId }) => {
   //Upload file Attachment handle
   const handleFileUpload = async () => {
     if (!selectedFile) return;
+    setUploading(true);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -115,13 +127,24 @@ const Details = ({ projectId }) => {
         const data = await response.json();
         console.log("File uploaded:", data.url);
         console.log("Unique file ID:", data.uploadfileId); // You can use this ID for further actions
-        handleCancelSelection();
         fetchAttachments();
+        setSnackbarMessage("File uploaded successfully!");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
       } else {
         console.error("File upload failed");
+        setSnackbarMessage("File upload failed!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+      setSnackbarMessage("Error uploading file!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUploading(false);
+      handleCancelSelection();
     }
   };
   //Delete Attachment handle
@@ -135,8 +158,14 @@ const Details = ({ projectId }) => {
       console.log("File Deleted:", data);
       fetchAttachments(); // Refresh the list of files
       handleClose();
+      setSnackbarMessage("File Deleted successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error Deleting File:", error);
+      setSnackbarMessage("Error Deleting File!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
@@ -297,13 +326,32 @@ const Details = ({ projectId }) => {
                 </Button>
               </Tooltip>
               <Tooltip title="Upload" arrow>
-                <Button>
-                  <Upload onClick={handleFileUpload} />
+                <Button onClick={handleFileUpload} disabled={uploading}>
+                  {uploading ? (
+                    <CircularProgress size={24} sx={{ color: "green" }} />
+                  ) : (
+                    <UploadFile />
+                  )}
                 </Button>
               </Tooltip>
             </Typography>
           </>
         )}
+        {/* Snackbar for showing messages */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
 
         {isEditing ? (
           <>

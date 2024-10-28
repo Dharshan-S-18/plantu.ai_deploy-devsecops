@@ -21,6 +21,8 @@ import {
   CircularProgress,
   ListItemIcon,
   DialogContentText,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Textarea from "@mui/joy/Textarea";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -68,6 +70,16 @@ const EditProjectPage = () => {
 
   const [open, setOpen] = useState(false);
   const [selectedFileKey, setSelectedFileKey] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // sucess or error
+  const [uploading, setUploading] = useState(false);
+  const [Deleting, setDeleting] = useState(false);
+  const [Fetching, setFetching] = useState(false);
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
 
   const handleClickOpen = (fileKey) => {
     setSelectedFileKey(fileKey);
@@ -84,9 +96,14 @@ const EditProjectPage = () => {
   }, [projectId]);
 
   const fetchAttachments = async () => {
+    // Extract subdomain and accountId
+    setFetching(true);
+    const hostname = window.location.hostname;
+    const extractedSubdomain = hostname.split(".")[0];
+    const accountId = sessionStorage.getItem("accountId");
     try {
       const response = await fetch(
-        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment`
+        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment?accountId=${accountId}&subdomain=${extractedSubdomain}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -96,6 +113,8 @@ const EditProjectPage = () => {
       }
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -389,16 +408,19 @@ const EditProjectPage = () => {
   };
   const handleFileUpload = async () => {
     if (!selectedFile) return;
-
-    console.log("workspaceId:", id); // Check if this logs the correct value
-    console.log("projectId:", projectId); // Check if this logs the correct value
+    setUploading(true);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
 
+    // Extract subdomain and accountId
+    const hostname = window.location.hostname;
+    const extractedSubdomain = hostname.split(".")[0];
+    const accountId = sessionStorage.getItem("accountId");
+
     try {
       const response = await fetch(
-        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment`,
+        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment?accountId=${accountId}&subdomain=${extractedSubdomain}`,
         {
           method: "POST",
           body: formData,
@@ -409,29 +431,55 @@ const EditProjectPage = () => {
         const data = await response.json();
         console.log("File uploaded:", data.url);
         console.log("Unique file ID:", data.uploadfileId); // You can use this ID for further actions
-        handleCancelSelection(); // cancel the selection of file
         fetchAttachments(); // Refresh the list of files
+        setSnackbarMessage("File uploaded successfully");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
       } else {
         console.error("File upload failed");
+        setSnackbarMessage("File upload failed!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+      setSnackbarMessage("Error uploading file!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUploading(false);
+      handleCancelSelection(); // Cancel the selection of the file
     }
   };
 
   //Delete Attachment handle
   const handleConfirmDelete = async (fileKey) => {
+    setDeleting(true);
+    const hostname = window.location.hostname;
+    const extractedSubdomain = hostname.split(".")[0];
+    const accountId = sessionStorage.getItem("accountId");
     try {
-      const res = await fetch(`/api/project/${projectId}/attachment`, {
-        method: "DELETE",
-        body: JSON.stringify({ fileKey: selectedFileKey }),
-      });
+      const res = await fetch(
+        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment?accountId=${accountId}&subdomain=${extractedSubdomain}`,
+        {
+          method: "DELETE",
+          body: JSON.stringify({ fileKey: selectedFileKey }),
+        }
+      );
       const data = await res.json();
       console.log("File Deleted:", data);
       fetchAttachments(); // Refresh the list of files
       handleClose();
+      setSnackbarMessage("File Deleted successfully");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error Deleting File:", error);
+      setSnackbarMessage("Error Deleting File!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -732,15 +780,28 @@ const EditProjectPage = () => {
                   </Button>
                 </Tooltip>
                 <Tooltip title="Upload" arrow>
-                  <Button>
-                    <UploadFile onClick={handleFileUpload} />
+                  <Button onClick={handleFileUpload} disabled={uploading}>
+                    {uploading ? (
+                      <CircularProgress size={18} sx={{ color: "green" }} />
+                    ) : (
+                      <UploadFile />
+                    )}
                   </Button>
                 </Tooltip>
               </Typography>
             </>
           )}
           <Box>
-            {attachments.length === 0 ? (
+            {Fetching ? (
+              <CircularProgress
+                size={18}
+                sx={{
+                  color: "green",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
+            ) : attachments.length === 0 ? (
               <Typography>No attachments found for this project.</Typography>
             ) : (
               <Box>
@@ -752,8 +813,9 @@ const EditProjectPage = () => {
                     <Typography sx={{ mr: 2 }}>
                       {file.key.split("-").pop()} {/* Extracts the file name */}
                     </Typography>
+
                     <a
-                      href={`https://app-project-attachment.s3.ap-southeast-2.amazonaws.com/${file.key}`}
+                      href={`https://${file.bucketName}.s3.${file.region}.amazonaws.com/${file.key}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -779,7 +841,15 @@ const EditProjectPage = () => {
                       <DialogActions>
                         <Button onClick={handleClose}>Cancel</Button>
                         <Button onClick={handleConfirmDelete} color="error">
-                          Delete
+                          {Deleting ? (
+                            <CircularProgress
+                              size={18}
+                              sx={{ color: "green" }}
+                            />
+                          ) : (
+                            // <Delete color="error" />
+                            <Typography>Delete</Typography>
+                          )}
                         </Button>
                       </DialogActions>
                     </Dialog>
@@ -790,6 +860,21 @@ const EditProjectPage = () => {
           </Box>
         </DialogContent>
       </Dialog>
+      {/* Snackbar messages */}
+      <Snackbar
+        open={snackbarOpen}
+        onClose={handleSnackbarClose}
+        autoHideDuration={3000}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 };

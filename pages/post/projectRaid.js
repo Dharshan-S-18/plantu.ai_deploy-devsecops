@@ -18,6 +18,7 @@ import {
   DialogTitle,
   Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import { FormControl, FormLabel, Input } from "@mui/joy";
 import CloseIcon from "@mui/icons-material/Close";
@@ -56,6 +57,15 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
 
   const [open, setOpen] = useState(false); // Dialog open state
   const [selectedFileKey, setSelectedFileKey] = useState(null); // To track which file is being deleted
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // sucess or error
+  const [uploading, setUploading] = useState(false);
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   const handleClickOpen = (fileKey) => {
     setSelectedFileKey(fileKey);
     setOpen(true);
@@ -109,6 +119,7 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
   //Upload file Attachment handle
   const handleFileUpload = async () => {
     if (!selectedFile) return;
+    setUploading(true);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -126,13 +137,25 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
         const data = await response.json();
         console.log("File uploaded:", data.url);
         console.log("Unique file ID:", data.uploadfileId); // You can use this ID for further actions
-        handleCancelSelection();
+        // handleCancelSelection();
         fetchAttachments();
+        setSnackbarMessage("File uploaded successfully!");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
       } else {
         console.error("File upload failed");
+        setSnackbarMessage("File upload failed!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+      setSnackbarMessage("Error uploading file!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUploading(false);
+      handleCancelSelection();
     }
   };
 
@@ -148,10 +171,16 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
       );
       const data = await res.json();
       console.log("File Deleted:", data);
-      fetchAttachments(); // Refresh the list of files
+      fetchAttachments(); // Refresh the list of file
       handleClose(); // Close the dialog after delete
+      setSnackbarMessage("File Deleted successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error Deleting File:", error);
+      setSnackbarMessage("Error Deleting File!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
@@ -368,13 +397,18 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
                       </Button>
                     </Tooltip>
                     <Tooltip title="Upload" arrow>
-                      <Button>
-                        <UploadFile onClick={handleFileUpload} />
+                      <Button onClick={handleFileUpload} disabled={uploading}>
+                        {uploading ? (
+                          <CircularProgress size={24} sx={{ color: "green" }} />
+                        ) : (
+                          <UploadFile />
+                        )}
                       </Button>
                     </Tooltip>
                   </Typography>
                 </>
               )}
+
               <Grid item xs={12} sm={6}>
                 <Paper
                   elevation={2}
@@ -458,7 +492,21 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
               </Grid>
             </>
           )}
-
+          {/* Snackbar for showing messages */}
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={handleSnackbarClose}
+          >
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbarSeverity}
+              anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
           {/* Submit Button */}
           <Button type="submit" variant="contained" color="primary">
             {editMode ? "Update" : "Submit"}
