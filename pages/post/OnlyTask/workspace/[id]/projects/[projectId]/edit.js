@@ -20,6 +20,9 @@ import {
   MenuItem,
   CircularProgress,
   ListItemIcon,
+  DialogContentText,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Textarea from "@mui/joy/Textarea";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -44,6 +47,7 @@ import {
   Cancel,
   Delete,
   LinkRounded,
+  Title,
   UploadFile,
 } from "@mui/icons-material";
 
@@ -64,15 +68,42 @@ const EditProjectPage = () => {
   const [attachments, setAttachments] = useState([]);
   const fileInputRef = useRef(null);
 
+  const [open, setOpen] = useState(false);
+  const [selectedFileKey, setSelectedFileKey] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // sucess or error
+  const [uploading, setUploading] = useState(false);
+  const [Deleting, setDeleting] = useState(false);
+  const [Fetching, setFetching] = useState(false);
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  const handleClickOpen = (fileKey) => {
+    setSelectedFileKey(fileKey);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   // Fetch the attachments for the project
   useEffect(() => {
     fetchAttachments();
   }, [projectId]);
 
   const fetchAttachments = async () => {
+    // Extract subdomain and accountId
+    setFetching(true);
+    const hostname = window.location.hostname;
+    const extractedSubdomain = hostname.split(".")[0];
+    const accountId = sessionStorage.getItem("accountId");
     try {
       const response = await fetch(
-        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment`
+        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment?accountId=${accountId}&subdomain=${extractedSubdomain}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -82,6 +113,8 @@ const EditProjectPage = () => {
       }
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -375,16 +408,19 @@ const EditProjectPage = () => {
   };
   const handleFileUpload = async () => {
     if (!selectedFile) return;
-
-    console.log("workspaceId:", id); // Check if this logs the correct value
-    console.log("projectId:", projectId); // Check if this logs the correct value
+    setUploading(true);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
 
+    // Extract subdomain and accountId
+    const hostname = window.location.hostname;
+    const extractedSubdomain = hostname.split(".")[0];
+    const accountId = sessionStorage.getItem("accountId");
+
     try {
       const response = await fetch(
-        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment`,
+        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment?accountId=${accountId}&subdomain=${extractedSubdomain}`,
         {
           method: "POST",
           body: formData,
@@ -395,104 +431,143 @@ const EditProjectPage = () => {
         const data = await response.json();
         console.log("File uploaded:", data.url);
         console.log("Unique file ID:", data.uploadfileId); // You can use this ID for further actions
-        handleCancelSelection(); // cancel the selection of file
         fetchAttachments(); // Refresh the list of files
+        setSnackbarMessage("File uploaded successfully");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
       } else {
         console.error("File upload failed");
+        setSnackbarMessage("File upload failed!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+      setSnackbarMessage("Error uploading file!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUploading(false);
+      handleCancelSelection(); // Cancel the selection of the file
     }
   };
 
-  const handleDeleteAttachment = async (fileKey) => {
-    if (!confirm("Are you sure you want to delete this file?")) return;
-
+  //Delete Attachment handle
+  const handleConfirmDelete = async (fileKey) => {
+    setDeleting(true);
+    const hostname = window.location.hostname;
+    const extractedSubdomain = hostname.split(".")[0];
+    const accountId = sessionStorage.getItem("accountId");
     try {
       const res = await fetch(
-        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment`,
+        `/api/OnlyTaskApi/workspace/${id}/project/${projectId}/workSpaceAttachment?accountId=${accountId}&subdomain=${extractedSubdomain}`,
         {
           method: "DELETE",
-          body: JSON.stringify({ fileKey }),
+          body: JSON.stringify({ fileKey: selectedFileKey }),
         }
       );
       const data = await res.json();
       console.log("File Deleted:", data);
-      handleCancelSelection(); // cancel the selection of file
       fetchAttachments(); // Refresh the list of files
+      handleClose();
+      setSnackbarMessage("File Deleted successfully");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error Deleting File:", error);
+      setSnackbarMessage("Error Deleting File!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
     <Layout>
-      <Box sx={{ width: "100%", p: 0, gap: 0, mb: -1 }}>
-        <Tooltip title="Back" placement="right" arrow>
-          <IconButton onClick={handleBackClick} sx={{ mb: 1 }}>
-            <ArrowBackIosIcon />
-          </IconButton>
-        </Tooltip>
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Textarea
-            variant="plain"
-            size="small"
-            value={projectUpdates.projectName}
-            onChange={handleProjectNameChange}
-            onBlur={handleProjectNameBlur} // Update on blur
-            sx={{ mb: 2, fontSize: "1.25rem", fontWeight: "bold" }}
-          />
-          <Tooltip title="Description" placement="top" arrow>
-            <IconButton onClick={handleDescriptionClick} sx={{ mb: 1 }}>
-              <NotesIcon />
+      <Box sx={{ width: "100%", p: 0, gap: 0, mb: -1, marginTop: -1, }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Tooltip title="Back" placement="right" arrow>
+            <IconButton onClick={handleBackClick} sx={{
+              mb: 1,
+              marginTop: -1,
+              width: 40, // Adjust the width
+              height: 40, // Adjust the height
+              borderRadius: '50%', // Makes it a circle
+              border: '2px solid', // Border width
+              borderColor: 'primary.main', // Border color
+              backgroundColor: 'transparent', // No fill color
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              '&:hover': {
+                borderColor: 'primary.dark', // Change border color on hover
+              },
+            }}>
+              <ArrowBackIosIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Assignee" placement="top" arrow>
-            <IconButton onClick={handleAgentClick} sx={{ mb: 1 }}>
-              <PersonIcon />
-            </IconButton>
-          </Tooltip>
-          {projectUpdates.assignedAgent && (
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {projectUpdates.assignedAgent}
-            </Typography>
-          )}
-          <Tooltip title="Priority" placement="top" arrow>
-            <IconButton
-              onClick={handlePriorityClick}
-              sx={{ mb: 1, color: getPriorityIconColor() }}
-            >
-              <FlagIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Date" placement="top" arrow>
-            <IconButton onClick={handleDateClick} sx={{ mb: 1 }}>
-              <DateRangeIcon />
-            </IconButton>
-          </Tooltip>
-          {projectUpdates.startDate && (
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {`Start: ${formatDate(projectUpdates.startDate)}`}
-            </Typography>
-          )}
-          {projectUpdates.dueDate && (
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {`Due: ${formatDate(projectUpdates.dueDate)}`}
-            </Typography>
-          )}
-          <Tooltip title="Delete Project" placement="top" arrow>
-            <IconButton onClick={handleDeleteClick} sx={{ mb: 1 }}>
-              <DeleteIcon color="error" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Attachment" placement="top" arrow>
-            <IconButton sx={{ mb: 1 }} onClick={() => setAttachmentOpen(true)}>
-              <Attachment />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}> {/* Added margin left for spacing */}
+            <Textarea
+              variant="plain"
+              size="small"
+              value={projectUpdates.projectName}
+              onChange={handleProjectNameChange}
+              onBlur={handleProjectNameBlur} // Update on blur
+              sx={{ mb: 2, fontSize: '1.25rem', fontWeight: 'bold' }}
+            />
+            <Tooltip title="Description" placement="top" arrow>
+              <IconButton onClick={handleDescriptionClick} sx={{ mb: 1 }}>
+                <NotesIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Assignee" placement="top" arrow>
+              <IconButton onClick={handleAgentClick} sx={{ mb: 1 }}>
+                <PersonIcon />
+              </IconButton>
+            </Tooltip>
+            {projectUpdates.assignedAgent && (
+              <Typography variant="body2" sx={{ ml: 1 }}>
+                {projectUpdates.assignedAgent}
+              </Typography>
+            )}
+            <Tooltip title="Priority" placement="top" arrow>
+              <IconButton
+                onClick={handlePriorityClick}
+                sx={{ mb: 1, color: getPriorityIconColor() }}
+              >
+                <FlagIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Date" placement="top" arrow>
+              <IconButton onClick={handleDateClick} sx={{ mb: 1 }}>
+                <DateRangeIcon />
+              </IconButton>
+            </Tooltip>
+            {projectUpdates.startDate && (
+              <Typography variant="body2" sx={{ ml: 1 }}>
+                {`Start: ${formatDate(projectUpdates.startDate)}`}
+              </Typography>
+            )}
+            {projectUpdates.dueDate && (
+              <Typography variant="body2" sx={{ ml: 1 }}>
+                {`Due: ${formatDate(projectUpdates.dueDate)}`}
+              </Typography>
+            )}
+            <Tooltip title="Delete Project" placement="top" arrow>
+              <IconButton onClick={handleDeleteClick} sx={{ mb: 1 }}>
+                <DeleteIcon color="error" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Attachment" placement="top" arrow>
+              <IconButton sx={{ mb: 1 }} onClick={() => setAttachmentOpen(true)}>
+                <Attachment />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
-        <Divider />
+        <Divider sx={{ ml: -3 }} />
 
         <Tabs
           value={activeSection}
@@ -699,17 +774,34 @@ const EditProjectPage = () => {
             <>
               <Typography>
                 {selectedFile.name}
-                <IconButton onClick={handleCancelSelection}>
-                  <Cancel />
-                </IconButton>
-                <IconButton>
-                  <UploadFile onClick={handleFileUpload} />
-                </IconButton>
+                <Tooltip title="Cancel" arrow>
+                  <Button onClick={handleCancelSelection}>
+                    <Cancel color="error" />
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Upload" arrow>
+                  <Button onClick={handleFileUpload} disabled={uploading}>
+                    {uploading ? (
+                      <CircularProgress size={18} sx={{ color: "green" }} />
+                    ) : (
+                      <UploadFile />
+                    )}
+                  </Button>
+                </Tooltip>
               </Typography>
             </>
           )}
           <Box>
-            {attachments.length === 0 ? (
+            {Fetching ? (
+              <CircularProgress
+                size={18}
+                sx={{
+                  color: "green",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
+            ) : attachments.length === 0 ? (
               <Typography>No attachments found for this project.</Typography>
             ) : (
               <Box>
@@ -721,18 +813,46 @@ const EditProjectPage = () => {
                     <Typography sx={{ mr: 2 }}>
                       {file.key.split("-").pop()} {/* Extracts the file name */}
                     </Typography>
+
                     <a
-                      href={`https://app-project-attachment.s3.ap-southeast-2.amazonaws.com/${file.key}`}
+                      href={`https://${file.bucketName}.s3.${file.region}.amazonaws.com/${file.key}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <Button>
-                        <LinkRounded />
-                      </Button>
+                      <Tooltip title="View" arrow>
+                        <Button>
+                          <LinkRounded />
+                        </Button>
+                      </Tooltip>
                     </a>
-                    <Button onClick={() => handleDeleteAttachment(file.key)}>
-                      <Delete />
-                    </Button>
+                    <Tooltip title="Delete" arrow>
+                      <Button onClick={() => handleClickOpen(file.key)}>
+                        <Delete color="error" />
+                      </Button>
+                    </Tooltip>
+                    <Dialog open={open} onClose={handleClose}>
+                      <DialogTitle>{"Confirm Delete"}</DialogTitle>
+                      <DialogContent>
+                        <DialogContentText>
+                          Are you sure you want to delete this file? This action
+                          cannot be undone.
+                        </DialogContentText>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={handleClose}>Cancel</Button>
+                        <Button onClick={handleConfirmDelete} color="error">
+                          {Deleting ? (
+                            <CircularProgress
+                              size={18}
+                              sx={{ color: "green" }}
+                            />
+                          ) : (
+                            // <Delete color="error" />
+                            <Typography>Delete</Typography>
+                          )}
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                   </Box>
                 ))}
               </Box>
@@ -740,6 +860,21 @@ const EditProjectPage = () => {
           </Box>
         </DialogContent>
       </Dialog>
+      {/* Snackbar messages */}
+      <Snackbar
+        open={snackbarOpen}
+        onClose={handleSnackbarClose}
+        autoHideDuration={3000}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 };

@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Grid, Paper, Typography, Box, CircularProgress, List, ListItem, ListItemText } from '@mui/material';
 import {
+    AssignmentTurnedIn as CompletedIcon,
+    PriorityHigh as HighPriorityIcon,
+    Warning as UrgentIcon,
+    Assignment as TotalIcon
+} from '@mui/icons-material';
+import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
@@ -52,6 +58,34 @@ const Dashboard = ({ workspaceId }) => {  // Get workspaceId as a prop
     const mediumProjects = projects.filter(project => project.priority === 'Medium').length;
     const lowProjects = projects.filter(project => project.priority === 'Low').length;
 
+    // A reusable function to render each card with icon above the text
+    const renderCard = (title, value, icon, color, shadowColor, subtitle) => (
+        <Paper elevation={3} sx={{ padding: 2, textAlign: 'center', position: 'relative' }}>
+            <Box 
+                sx={{ 
+                    width: 40, 
+                    height: 40, 
+                    backgroundColor: color, 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    borderRadius: 2,  // Make it square
+                    position: 'absolute', 
+                    top: -20, 
+                    left: 10, 
+                    boxShadow: `0px 4px 8px ${shadowColor}` 
+                }}
+            >
+                {icon}
+            </Box>
+            <Box sx={{ marginTop: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{title}</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{value}</Typography>
+                <Typography variant="body2" sx={{ color: '#777' }}>{subtitle}</Typography>
+            </Box>
+        </Paper>
+    );
+
     // Project completion data (if needed for pie chart)
     const completedProjects = projects.filter(project => project.statusList?.some(status => status.status === 'completed')).length;
     const incompleteProjects = totalProjects - completedProjects;
@@ -86,6 +120,54 @@ const Dashboard = ({ workspaceId }) => {  // Get workspaceId as a prop
     return (
         <Box sx={{ padding: 2 }}>
             <Grid container spacing={2}>
+             {/* Total Projects */}
+             <Grid item xs={12} md={3}>
+                    {renderCard(
+                        'Total Projects',
+                        totalProjects,
+                        <TotalIcon sx={{ fontSize: 30, color: '#fff' }} />,
+                        '#000',  // Background color for the icon (black)
+                        'rgba(0, 0, 0, 0.4)',  // Shadow color for the icon
+                        '+5% from last week'
+                    )}
+                </Grid>
+
+                {/* Urgent Projects */}
+                <Grid item xs={12} md={3}>
+                    {renderCard(
+                        'Urgent Projects',
+                        urgentProjects,
+                        <UrgentIcon sx={{ fontSize: 30, color: '#fff' }} />,
+                        '#f44336',  // Red background for Urgent
+                        'rgba(244, 67, 54, 0.4)',  // Shadow color for red
+                        '+3% than last month'
+                    )}
+                </Grid>
+
+                {/* High Priority Projects */}
+                <Grid item xs={12} md={3}>
+                    {renderCard(
+                        'High Priority Projects',
+                        highProjects,
+                        <HighPriorityIcon sx={{ fontSize: 30, color: '#fff' }} />,
+                        '#2196f3',  // Blue background for High Priority
+                        'rgba(33, 150, 243, 0.4)',  // Shadow color for blue
+                        '+1% from yesterday'
+                    )}
+                </Grid>
+
+                {/* Medium Priority Projects */}
+                <Grid item xs={12} md={3}>
+                    {renderCard(
+                        'Medium Priority Projects',
+                        mediumProjects,
+                        <CompletedIcon sx={{ fontSize: 30, color: '#fff' }} />,
+                        '#4caf50',  // Green background for Medium Priority
+                        'rgba(76, 175, 80, 0.4)',  // Shadow color for green
+                        'Just updated'
+                    )}
+                </Grid>
+
                 {/* Project List - Recent Projects */}
                 <Grid item xs={12} md={6}>
                 <Paper elevation={3} sx={{ padding: 2, height: 400, overflowY: 'auto' }}>
@@ -151,37 +233,7 @@ const Dashboard = ({ workspaceId }) => {  // Get workspaceId as a prop
                 </Grid>
 
 
-                {/* Total Projects */}
-                <Grid item xs={12} md={3}>
-                    <Paper elevation={3} sx={{ padding: 2 }}>
-                        <Typography variant="h6">Total Projects</Typography>
-                        <Typography variant="h4">{totalProjects}</Typography>
-                    </Paper>
-                </Grid>
-
-                {/* Urgent Projects */}
-                <Grid item xs={12} md={3}>
-                    <Paper elevation={3} sx={{ padding: 2 }}>
-                        <Typography variant="h6">Urgent Projects</Typography>
-                        <Typography variant="h4">{urgentProjects}</Typography>
-                    </Paper>
-                </Grid>
-
-                {/* High Priority Projects */}
-                <Grid item xs={12} md={3}>
-                    <Paper elevation={3} sx={{ padding: 2 }}>
-                        <Typography variant="h6">High Priority Projects</Typography>
-                        <Typography variant="h4">{highProjects}</Typography>
-                    </Paper>
-                </Grid>
-
-                {/* Medium Priority Projects */}
-                <Grid item xs={12} md={3}>
-                    <Paper elevation={3} sx={{ padding: 2 }}>
-                        <Typography variant="h6">Medium Priority Projects</Typography>
-                        <Typography variant="h4">{mediumProjects}</Typography>
-                    </Paper>
-                </Grid>
+                
 
             </Grid>
         </Box>

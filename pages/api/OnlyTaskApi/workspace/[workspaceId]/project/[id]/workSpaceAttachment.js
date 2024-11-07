@@ -8,43 +8,72 @@ import {
 import formidable from "formidable";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
+import dbConnect from "../../../../../../../utils/dbConnect";
+import S3BucketCred from "../../../../../../../models/S3BucketCred";
 
-// Config for file uploads (necessary for handling files with formidable)
 export const config = {
   api: {
-    bodyParser: false, // Required for file uploads
+    bodyParser: false,
   },
 };
 
-// Initialize S3 client
-const s3Client = new S3Client({
-  region: process.env.REGION,
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY_ID,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  },
-});
-
 export default async function handler(req, res) {
-  const { workspaceId, id } = req.query; // Get project ID from the URL
-  console.log("req", req.query);
+  const { workspaceId, id, accountId, subdomain } = req.query;
+
+  await dbConnect();
+
+  // Fetch client credentials from MongoDB
+  const clientCredential = await S3BucketCred.findOne({
+    accountId: accountId,
+    subdomain: subdomain,
+  });
+
+  const s3Config = clientCredential
+    ? {
+        region: clientCredential.region,
+        credentials: {
+          accessKeyId: clientCredential.accessKeyId,
+          secretAccessKey: clientCredential.secretAccessKeyId,
+        },
+      }
+    : {
+        region: process.env.REGION,
+        credentials: {
+          accessKeyId: process.env.ACCESS_KEY_ID,
+          secretAccessKey: process.env.SECRET_ACCESS_KEY,
+        },
+      };
+
+  const s3Client = new S3Client(s3Config);
 
   if (req.method === "GET") {
-    // Fetch attachments from S3
+    console.log("Client bucket name:", clientCredential?.bucketName);
     try {
       const listParams = {
-        Bucket: process.env.BUCKET_NAME,
-        Prefix: `workspace/${workspaceId}/project/${id}/`, // Fetch only files for this project
+        Bucket: clientCredential
+          ? clientCredential.bucketName
+          : process.env.BUCKET_NAME,
+        Prefix: `workspace/${workspaceId}/project/${id}/`,
       };
 
       const data = await s3Client.send(new ListObjectsV2Command(listParams));
-      if (!data.Contents || data.Contents.length === 0) {
-        return res.status(200).json([]); // No files found
-      }
-      const files = data.Contents.map((file) => ({
-        key: file.Key,
-        url: `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${file.Key}`,
-      }));
+      const files =
+        data.Contents?.map((file) => ({
+          key: file.Key,
+          bucketName: clientCredential
+            ? clientCredential.bucketName
+            : process.env.BUCKET_NAME,
+          region: clientCredential
+            ? clientCredential.region
+            : process.env.REGION,
+          url: `https://${
+            clientCredential
+              ? clientCredential.bucketName
+              : process.env.BUCKET_NAME
+          }.s3.${
+            clientCredential ? clientCredential.region : process.env.REGION
+          }.amazonaws.com/${file.Key}`,
+        })) || [];
 
       return res.status(200).json(files);
     } catch (error) {
@@ -52,7 +81,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Error fetching files" });
     }
   } else if (req.method === "POST") {
-    // Upload an attachment to S3
     const form = formidable();
 
     form.parse(req, async (err, fields, files) => {
@@ -61,30 +89,31 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "File parsing error" });
       }
 
-      // Log the files object to check its structure
-      console.log("Files received:", files);
-
-      const file = files.file ? files.file[0] : null; // Access the first file in the array
+      const file = files.file ? files.file[0] : null;
       if (!file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const uploadfileId = uuidv4(); // Generate a unique ID for the file
-      const key = `workspace/${workspaceId}/project/${id}/${uploadfileId}-${file.originalFilename}`; // Create a unique key for the file
+      const uploadfileId = uuidv4();
+      const key = `workspace/${workspaceId}/project/${id}/${uploadfileId}-${file.originalFilename}`;
 
       try {
         const uploadParams = {
-          Bucket: process.env.BUCKET_NAME,
+          Bucket: clientCredential
+            ? clientCredential.bucketName
+            : process.env.BUCKET_NAME,
           Key: key,
           Body: fs.createReadStream(file.filepath),
           ContentType: file.mimetype,
         };
 
-        // Upload the file to S3
         const data = await s3Client.send(new PutObjectCommand(uploadParams));
-        console.log("File uploaded successfully:", data);
         return res.status(200).json({
-          url: `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${key}`,
+          url: `https://${
+            clientCredential
+              ? clientCredential.bucketName
+              : process.env.BUCKET_NAME
+          }.s3.amazonaws.com/${key}`,
           uploadfileId,
         });
       } catch (error) {
@@ -95,26 +124,25 @@ export default async function handler(req, res) {
       }
     });
   } else if (req.method === "DELETE") {
-    // Handle DELETE requests
     let body = "";
     req.on("data", (chunk) => {
-      body += chunk.toString(); // Convert Buffer to string
+      body += chunk.toString();
     });
 
     req.on("end", async () => {
       try {
-        const { fileKey } = JSON.parse(body); // Parse the body to get fileKey
-
+        const { fileKey } = JSON.parse(body);
         if (!fileKey) {
           return res.status(400).json({ error: "File key is required" });
         }
 
         const deleteParams = {
-          Bucket: process.env.BUCKET_NAME,
-          Key: fileKey, // The key of the file to delete
+          Bucket: clientCredential
+            ? clientCredential.bucketName
+            : process.env.BUCKET_NAME,
+          Key: fileKey,
         };
         await s3Client.send(new DeleteObjectCommand(deleteParams));
-        console.log("File Deleted Successfully:", fileKey);
         return res.status(200).json({ message: "File Deleted Successfully" });
       } catch (error) {
         console.error("S3 delete error:", error);
@@ -124,7 +152,6 @@ export default async function handler(req, res) {
       }
     });
   } else {
-    // Handle unsupported methods
     return res.status(405).json({ error: "Method not allowed" });
   }
 }
