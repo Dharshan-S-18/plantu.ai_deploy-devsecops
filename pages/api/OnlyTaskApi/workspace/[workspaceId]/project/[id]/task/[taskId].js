@@ -111,6 +111,10 @@ export default async function handler(req, res) {
         task.status = req.body.status || task.status;
         task.relation = req.body.relation || task.relation;
         task.labels = req.body.labels || task.labels;
+        // Update milestone specifically to handle true or false values
+        if (typeof req.body.milestone !== 'undefined') {
+          task.milestone = req.body.milestone;
+        }
 
         // Save the updated workspace document
         await workspace.save();

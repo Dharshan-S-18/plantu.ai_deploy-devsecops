@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'POST':
       try {
-        const { name, assignee, dueDate, priority, status, comments } = req.body;
+        const { name, description, assignee, dueDate, priority, status, comments, checklist, allocatedEffort, actualEffort } = req.body;
 
         // Find the workspace by ID
         const workspace = await Workspace.findById(workspaceId);
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         }
 
         // Create new subtask and add to the task's subtasks array
-        const newSubtask = { name, assignee, dueDate, priority, status, comments };
+        const newSubtask = { name, description, assignee, dueDate, priority, status, comments, checklist, allocatedEffort, actualEffort  };
         task.subtasks.push(newSubtask);
 
         // Save the updated workspace document
