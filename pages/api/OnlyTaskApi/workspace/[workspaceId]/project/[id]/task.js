@@ -26,6 +26,7 @@ export default async function handler(req, res) {
           checklist,
           status,
           relation,
+          milestone,
         } = req.body;
 
         // Find the workspace and the project within it
@@ -54,6 +55,7 @@ export default async function handler(req, res) {
           actualEffort,
           checklist,
           status,
+          milestone,
           relation,
         };
 

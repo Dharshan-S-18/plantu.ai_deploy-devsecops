@@ -35,6 +35,7 @@ const TaskSchema = new mongoose.Schema({
   actualEffort: { type: Number},
   allocatedEffort: { type: Number},
   status: { type: String },
+  milestone: { type: Boolean, default: false },
   relation: [{ type: String }],
   dependency: { type: String },
   comments: [CommentSchema],
