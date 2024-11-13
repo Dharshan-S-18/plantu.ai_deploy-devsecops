@@ -4,7 +4,10 @@ import { FormatBold, FormatItalic, FormatListBulleted, FormatListNumbered, Inser
 import MapsUgcRoundedIcon from '@mui/icons-material/MapsUgcRounded';
 import EmojiPicker from 'emoji-picker-react';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime'; // Import relativeTime plugin
 import axios from 'axios';
+
+dayjs.extend(relativeTime); // Activate relativeTime plugin
 
 const CommentSection = ({ taskId, workspaceId, projectId }) => {
     const [comments, setComments] = useState([]);
@@ -18,9 +21,7 @@ const CommentSection = ({ taskId, workspaceId, projectId }) => {
 
     const fetchComments = async () => {
         try {
-            const response = await axios.get(
-                `/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/task/${taskId}/comments`
-            );
+            const response = await axios.get(`/api/project/${projectId}/task/${taskId}/comments`);
             setComments(response.data.comments.reverse());
             commentRef.current.innerHTML = '';
             setIsPostDisabled(true);
@@ -40,10 +41,7 @@ const CommentSection = ({ taskId, workspaceId, projectId }) => {
         };
 
         try {
-            const response = await axios.post(
-                `/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/task/${taskId}/comments`,
-                newCommentData
-            );
+            const response = await axios.post(`/api/project/${projectId}/task/${taskId}/comments`, newCommentData);
             if (response.status === 200) {
                 setComments((prev) => [newCommentData, ...prev]);
                 commentRef.current.innerHTML = '';
@@ -99,17 +97,17 @@ const CommentSection = ({ taskId, workspaceId, projectId }) => {
                 ))}
             </Box>
             <Divider variant="middle" />
-            <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-                <Tooltip title="Bold"><IconButton onClick={() => applyTextFormat('bold')}><FormatBold /></IconButton></Tooltip>
-                <Tooltip title="Italic"><IconButton onClick={() => applyTextFormat('italic')}><FormatItalic /></IconButton></Tooltip>
-                <Tooltip title="Bulleted List"><IconButton onClick={() => applyTextFormat('insertUnorderedList')}><FormatListBulleted /></IconButton></Tooltip>
-                <Tooltip title="Numbered List"><IconButton onClick={() => applyTextFormat('insertOrderedList')}><FormatListNumbered /></IconButton></Tooltip>
-                <Tooltip title="Link"><IconButton onClick={() => {
-                    const url = prompt('Enter the URL', 'http://');
-                    if (url) applyTextFormat('createLink', url);
-                }}><InsertLink /></IconButton></Tooltip>
-                <IconButton onClick={toggleEmojiPicker}>😊</IconButton>
+            {/* <Box sx={{ display: 'flex', alignItems: 'center', mt: 2}}> */}
+            <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                    <Tooltip title="Bold"><IconButton onClick={() => applyTextFormat('bold')}><FormatBold /></IconButton></Tooltip>
+                    <Tooltip title="Italic"><IconButton onClick={() => applyTextFormat('italic')}><FormatItalic /></IconButton></Tooltip>
+                    <Tooltip title="Bulleted List"><IconButton onClick={() => applyTextFormat('insertUnorderedList')}><FormatListBulleted /></IconButton></Tooltip>
+                    <Tooltip title="Numbered List"><IconButton onClick={() => applyTextFormat('insertOrderedList')}><FormatListNumbered /></IconButton></Tooltip>
+                    <Tooltip title="Link"><IconButton onClick={() => {
+                        const url = prompt('Enter the URL', 'http://');
+                        if (url) applyTextFormat('createLink', url);
+                    }}><InsertLink /></IconButton></Tooltip>
+                    <IconButton onClick={toggleEmojiPicker}>😊</IconButton>
                 </Box>
                 <Popover
                     open={Boolean(showEmojiPicker)}
@@ -126,31 +124,33 @@ const CommentSection = ({ taskId, workspaceId, projectId }) => {
                 >
                     <EmojiPicker onEmojiClick={addEmoji} />
                 </Popover>
-                </Box>
                 <Box
                     ref={commentRef}
                     contentEditable
                     placeholder="Add a comment..."
                     sx={{
-                        ml: 1,
-                        flex: 1,
+                        mt: 2,
                         p: 1,
+                        mr:2,
                         minHeight: '40px',
                         borderRadius: '4px',
                         outline: 'none',
+                        backgroundColor: '#f9f9f9',
                         '&:empty:before': { content: 'attr(placeholder)', color: '#9e9e9e' },
                     }}
                     onInput={() => setIsPostDisabled(!commentRef.current.innerHTML.trim())}
                 />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                 <Button
                     variant="contained"
                     onClick={handleAddComment}
                     disabled={isPostDisabled}
-                    sx={{ ml: 2, mt: 2 }}
+                    sx={{ ml: 1, mt: 2, mr:2 }}
                 >
                     Post
                 </Button>
-            
+                </Box>
+            {/* </Box> */}
         </Box>
     );
 };

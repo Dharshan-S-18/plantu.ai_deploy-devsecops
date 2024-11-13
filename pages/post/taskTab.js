@@ -24,6 +24,7 @@ import KanbanView from './taskKanban'; // Adjust path accordingly
 import SubtaskModal from './Subtask'; // Import the Subtask component
 import GanttChartView from './taskGanttChartView'; // Import the Gantt chart component
 import CalendarView from './taskCalendarView';
+import StarIcon from '@mui/icons-material/Star';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import TableViewIcon from '@mui/icons-material/ViewList'; // Import your icon for Table View
@@ -219,13 +220,16 @@ const TaskTab = ({ projectId }) => {
                   <TableRow onClick={() => handleModalOpen(task)}>
                     <TableCell>
                       <Box display="flex" alignItems="center">
-                        <IconButton
+                        {/* <IconButton
                           aria-label="expand row"
                           size="small"
                           onClick={(event) => handleExpandClick(task._id, event)}
                         >
                           {expandedTaskIds[task._id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        </IconButton>
+                        </IconButton> */}
+                        {task.milestone && (
+              <StarIcon style={{ color: 'gold', marginRight: 8 }} />
+            )}
                         {task.name}
                       </Box>
                     </TableCell>
@@ -236,7 +240,7 @@ const TaskTab = ({ projectId }) => {
                     {/* <TableCell>{task.comments}</TableCell> */}
                     <TableCell>{task.subtasks ? task.subtasks.length : 0}</TableCell>
                   </TableRow>
-                  <TableRow>
+                  {/* <TableRow>
                     <TableCell colSpan={7} style={{ paddingBottom: 0, paddingTop: 0 }}>
                       <Collapse in={expandedTaskIds[task._id]} timeout="auto" unmountOnExit>
                         <Box margin={1}>
@@ -271,7 +275,7 @@ const TaskTab = ({ projectId }) => {
                         </Box>
                       </Collapse>
                     </TableCell>
-                  </TableRow>
+                  </TableRow> */}
                 </React.Fragment>
               ))}
             </TableBody>

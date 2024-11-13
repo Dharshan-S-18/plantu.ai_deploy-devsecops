@@ -468,7 +468,7 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
   const handleAssigneeSelect = (assignee) => {
     setTaskData((prevData) => ({
       ...prevData,
-      assigneePrimary: assignee,
+      assigneePrimary: assignee || 'Unassigned',
     }));
     setIsSaveButtonEnabled(true);
     handleClose(); // Close the menu after selection
