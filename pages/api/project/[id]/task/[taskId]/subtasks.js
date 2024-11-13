@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
   if (method === 'POST') {
     try {
-      const { name, assignee, dueDate, priority, status, comments } = req.body;
+      const { name, description, assignee, dueDate, priority, status, comments, checklist, allocatedEffort, actualEffort } = req.body;
 
       // Find the project by ID
       const project = await Project.findById(id);
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       }
 
       // Create new subtask and add to the task's subtasks array
-      const newSubtask = { name, assignee, dueDate, priority, status, comments };
+      const newSubtask = { name, description, assignee, dueDate, priority, status, comments, checklist, allocatedEffort, actualEffort };
       task.subtasks.push(newSubtask);
 
       // Save the project with the updated task

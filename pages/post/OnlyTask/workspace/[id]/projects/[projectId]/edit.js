@@ -37,6 +37,7 @@ import CalendarTab from "../../../../taskCalendar";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import dynamic from "next/dynamic";
 import format from "date-fns/format"; // Import date formatting function
+import AssigneeMenu from '../../../../../../../components/AssigneeMenu';
 
 // Import ReactQuill dynamically to prevent SSR issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -226,37 +227,24 @@ const EditProjectPage = () => {
     }));
   };
 
-  // Agent-related handlers
-  const handleAgentClick = (event) => {
-    setAnchorEl(event.currentTarget);
-    fetchAgents(); // Fetch agent list when menu is opened
+     // Open the AssigneeMenu when the assignee icon is clicked
+     const handleAgentClick = (event) => {
+      setAnchorEl(event.currentTarget); // Set anchor for menu positioning
   };
 
-  const handleAgentClose = () => {
-    setAnchorEl(null);
+    // Close the AssigneeMenu
+    const handleAgentClose = () => {
+      setAnchorEl(null);
   };
 
-  const fetchAgents = async () => {
-    setLoadingAgents(true);
-    const hostname = window.location.hostname;
-    const extractedSubdomain = hostname.split(".")[0];
-    const accountId = sessionStorage.getItem("accountId");
-    if (!accountId) {
-      console.error("No accountId found in sessionStorage");
-      return;
-    }
-    try {
-      const response = await fetch(
-        `/api/auth/getAgents?accountId=${accountId}&subdomain=${extractedSubdomain}`
-      ); // Replace with your actual API endpoint for agents
-      const data = await response.json();
-      setAgents(data); // Assuming API returns an array of agents
-    } catch (error) {
-      console.error("Failed to fetch agents:", error);
-      setAgents([]);
-    } finally {
-      setLoadingAgents(false);
-    }
+    // Handle the agent selection from AssigneeMenu
+    const handleAgentSelect = (agentName) => {
+      setProjectUpdates((prev) => ({
+          ...prev,
+          assignedAgent: agentName || 'Unassigned', // Set to agent name or "Unassigned"
+      }));
+      handleAgentClose(); // Close the menu after selection
+      handleSaveUpdates({ assignedAgent: agentName });
   };
 
   const handleMenuItemSelect = (agentName) => {
@@ -641,35 +629,13 @@ const EditProjectPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Agent Selection Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleAgentClose}
-      >
-        {loadingAgents ? (
-          <MenuItem>
-            <CircularProgress size={24} />
-          </MenuItem>
-        ) : agents.length > 0 ? (
-          agents.map((agent) => (
-            <MenuItem
-              key={agent.id}
-              onClick={() => handleMenuItemSelect(agent.name)}
-              selected={projectUpdates.assignedAgent === agent.name} // Highlight selected agent
-            >
-              {projectUpdates.assignedAgent === agent.name && (
-                <ListItemIcon>
-                  <CheckIcon />
-                </ListItemIcon>
-              )}
-              {agent.name} {/* Display agent name */}
-            </MenuItem>
-          ))
-        ) : (
-          <MenuItem>No Agents Available</MenuItem>
-        )}
-      </Menu>
+       {/* AssigneeMenu Component */}
+       <AssigneeMenu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleAgentClose}
+                onAssigneeSelect={handleAgentSelect} // Pass selection handler
+            />
       {/* Priority Selection Menu */}
       <Menu
         anchorEl={priorityAnchorEl}

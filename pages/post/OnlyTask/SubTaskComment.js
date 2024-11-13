@@ -22,7 +22,7 @@ const CommentSection = ({ workspaceId, projectId, taskId, subtaskId, onCommentsC
     const fetchComments = async () => {
         try {
             console.log("Fetching comments for IDs:", { workspaceId, projectId, taskId, subtaskId });
-            
+
             const response = await axios.get(
                 `/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/task/${taskId}/subtasks/${subtaskId}/subtaskComment`
             );
@@ -106,16 +106,16 @@ const CommentSection = ({ workspaceId, projectId, taskId, subtaskId, onCommentsC
             </Box>
             <Divider variant="middle" />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-                <Tooltip title="Bold"><IconButton onClick={() => applyTextFormat('bold')}><FormatBold /></IconButton></Tooltip>
-                <Tooltip title="Italic"><IconButton onClick={() => applyTextFormat('italic')}><FormatItalic /></IconButton></Tooltip>
-                <Tooltip title="Bulleted List"><IconButton onClick={() => applyTextFormat('insertUnorderedList')}><FormatListBulleted /></IconButton></Tooltip>
-                <Tooltip title="Numbered List"><IconButton onClick={() => applyTextFormat('insertOrderedList')}><FormatListNumbered /></IconButton></Tooltip>
-                <Tooltip title="Link"><IconButton onClick={() => {
-                    const url = prompt('Enter the URL', 'http://');
-                    if (url) applyTextFormat('createLink', url);
-                }}><InsertLink /></IconButton></Tooltip>
-                <IconButton onClick={toggleEmojiPicker}>😊</IconButton>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Tooltip title="Bold"><IconButton onClick={() => applyTextFormat('bold')}><FormatBold /></IconButton></Tooltip>
+                    <Tooltip title="Italic"><IconButton onClick={() => applyTextFormat('italic')}><FormatItalic /></IconButton></Tooltip>
+                    <Tooltip title="Bulleted List"><IconButton onClick={() => applyTextFormat('insertUnorderedList')}><FormatListBulleted /></IconButton></Tooltip>
+                    <Tooltip title="Numbered List"><IconButton onClick={() => applyTextFormat('insertOrderedList')}><FormatListNumbered /></IconButton></Tooltip>
+                    <Tooltip title="Link"><IconButton onClick={() => {
+                        const url = prompt('Enter the URL', 'http://');
+                        if (url) applyTextFormat('createLink', url);
+                    }}><InsertLink /></IconButton></Tooltip>
+                    <IconButton onClick={toggleEmojiPicker}>😊</IconButton>
                 </Box>
                 <Popover
                     open={Boolean(showEmojiPicker)}
@@ -132,32 +132,32 @@ const CommentSection = ({ workspaceId, projectId, taskId, subtaskId, onCommentsC
                 >
                     <EmojiPicker onEmojiClick={addEmoji} />
                 </Popover>
-                </Box>
-  
-                <Box
-                    ref={commentRef}
-                    contentEditable
-                    placeholder="Add a comment..."
-                    sx={{
-                        ml: 1,
-                        flex: 1,
-                        p: 1,
-                        minHeight: '40px',
-                        borderRadius: '4px',
-                        outline: 'none',
-                        '&:empty:before': { content: 'attr(placeholder)', color: '#9e9e9e' },
-                    }}
-                    onInput={() => setIsPostDisabled(!commentRef.current.innerHTML.trim())}
-                />
-                <Button
-                    variant="contained"
-                    onClick={handleAddComment}
-                    disabled={isPostDisabled}
-                    sx={{ ml:2, mt:2 }}
-                >
-                    Post
-                </Button>
-            
+            </Box>
+
+            <Box
+                ref={commentRef}
+                contentEditable
+                placeholder="Add a comment..."
+                sx={{
+                    ml: 1,
+                    flex: 1,
+                    p: 1,
+                    minHeight: '40px',
+                    borderRadius: '4px',
+                    outline: 'none',
+                    '&:empty:before': { content: 'attr(placeholder)', color: '#9e9e9e' },
+                }}
+                onInput={() => setIsPostDisabled(!commentRef.current.innerHTML.trim())}
+            />
+            <Button
+                variant="contained"
+                onClick={handleAddComment}
+                disabled={isPostDisabled}
+                sx={{ ml: 2, mt: 2 }}
+            >
+                Post
+            </Button>
+
         </Box>
     );
 };

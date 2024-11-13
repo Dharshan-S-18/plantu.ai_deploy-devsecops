@@ -20,7 +20,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { styled } from "@mui/system";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AddIcon from "@mui/icons-material/Add"; // Import Add icon
+import ChecklistIcon from "@mui/icons-material/Checklist"; // Import Add icon
 import EditIcon from "@mui/icons-material/Edit";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { generateTaskNumber } from "../../../lib/generateTaskNumber";
@@ -38,10 +38,11 @@ const columns = [
 
 const Column = styled(Box)({
   width: "100%",
-  padding: "16px",
+  padding: "8px", // Adjust padding to reduce spacing around each column
   borderRadius: "8px",
   backgroundColor: "#f5f5f5",
   marginRight: "16px",
+  minWidth: "250px",
   minHeight: "300px",
   display: "flex",
   flexDirection: "column",
@@ -51,17 +52,48 @@ const Column = styled(Box)({
 });
 
 const TaskCard = styled(Paper)({
+  width: "100%", // Adjusted width as per previous step
   padding: "12px",
   marginBottom: "8px",
-  borderLeft: "4px solid teal",
+  //borderLeft: "4px solid teal",
   display: "flex",
+  flexDirection: "column",
   justifyContent: "space-between",
-  alignItems: "center",
-  flexDirection: "row",
   backgroundColor: "#fff",
   borderRadius: "8px",
   boxShadow: "0px 1px 3px rgba(0, 0, 0, 0.2)",
   position: "relative",
+  height: "100px",
+  transition: "border 0.3s ease, box-shadow 0.3s ease", // Smooth transition
+
+  // Add hover effect
+  "&:hover": {
+    border: "1px solid teal", // Change border on hover
+    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)", // Add a bit more shadow
+  },
+});
+
+const TaskCardHeader = styled(Box)({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+});
+
+const TaskCardFooter = styled(Box)({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: "auto", // Align footer at the bottom
+});
+
+const TaskSubtaskCount = styled(Box)({
+  position: "absolute",
+  bottom: "8px",
+  right: "8px",
+  fontSize: "12px",
+  color: "#757575",
+  display: "flex",
+  alignItems: "center",
 });
 
 const BadgeWrapper = styled(Box)({
@@ -84,7 +116,7 @@ const ColumnHeader = styled(Box)(({ color }) => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  paddingRight: "8px",
+  paddingRight: "50px",
   paddingLeft: "10px",
   position: "sticky", // Make the header sticky
   top: 0, // Stick to the top of the column
@@ -92,7 +124,8 @@ const ColumnHeader = styled(Box)(({ color }) => ({
 }));
 
 const ColumnTitle = styled(Box)({
-  width: "15ch",
+  //width: "15ch",
+  flexGrow: 1,
 });
 
 const KanbanView = ({ workspaceId, projectId }) => {
@@ -127,7 +160,7 @@ const KanbanView = ({ workspaceId, projectId }) => {
   const [activeFilterCount, setActiveFilterCount] = useState(0); // For active filter count
   const [appliedFilters, setAppliedFilters] = useState([]); // For applied filters
   const [anchorElColumn, setAnchorElColumn] = useState(null);
-  const [selectedColumnId, setSelectedColumnId] = useState(null); 
+  const [selectedColumnId, setSelectedColumnId] = useState(null);
 
   // Function to fetch tasks
   const fetchTasks = async () => {
@@ -164,8 +197,8 @@ const KanbanView = ({ workspaceId, projectId }) => {
     fetchStatusList();
   }, [projectId]);
 
-   // Callback to trigger alerts
-   const handleStatusChange = (message, severity) => {
+  // Callback to trigger alerts
+  const handleStatusChange = (message, severity) => {
     setAlert({ open: true, message, severity });
     fetchStatusList(); // Refresh table after changes
   };
@@ -460,58 +493,58 @@ const KanbanView = ({ workspaceId, projectId }) => {
               {(provided) => (
                 <Column ref={provided.innerRef} {...provided.droppableProps}>
                   <ColumnHeader color={column.color}>
-                  <ColumnTitle>{column.title}</ColumnTitle>
+                    <ColumnTitle>{column.title}</ColumnTitle>
 
-                  {/* <IconButton
+                    {/* <IconButton
                     onClick={() => handleToggleAddTaskField(column.value)}
                     sx={{ color: "#fff" }}
                     size="small"
                   >
                     <AddIcon />
                   </IconButton> */}
-                  
-                  {/* Three dots menu button in Column Header */}
-                  <IconButton
-                    onClick={(event) => handleColumnMenuClick(event, column.value)}
-                    sx={{ color: "#fff" }} // White color for the icon
-                    size="small"
-                  >
-                    <MoreVertIcon />
-                  </IconButton>
 
-                  {/* Menu for the ColumnHeader */}
-                  <Menu
-                    anchorEl={anchorElColumn}
-                    open={Boolean(anchorElColumn && selectedColumnId === column.value)}
-                    onClose={handleColumnMenuClose}
-                  >
-                    <MenuItem
-                      onClick={() => {
-                        handleToggleEditStatus(column.value); // Edit column action
-                        handleColumnMenuClose();
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                      Edit Status
-                    </MenuItem>
-                    {/* You can add more options here, like "Delete Column" */}
-                  </Menu>
-
-                  
-                </ColumnHeader>
-                  {/* {showAddTaskField[column.value] && ( */}
-                    <TextField
-                      label="Add Task"
-                      variant="outlined"
+                    {/* Three dots menu button in Column Header */}
+                    <IconButton
+                      onClick={(event) => handleColumnMenuClick(event, column.value)}
+                      sx={{ color: "#fff", mr: -5 }} // White color for the icon
                       size="small"
-                      fullWidth
-                      value={newTasks[column.value]}
-                      onChange={(e) => handleChange(e, column.value)}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && handleCreateTask(column.value)
-                      }
-                      sx={{ mt: 1 }}
-                    />
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+
+                    {/* Menu for the ColumnHeader */}
+                    <Menu
+                      anchorEl={anchorElColumn}
+                      open={Boolean(anchorElColumn && selectedColumnId === column.value)}
+                      onClose={handleColumnMenuClose}
+                    >
+                      <MenuItem
+                        onClick={() => {
+                          handleToggleEditStatus(column.value); // Edit column action
+                          handleColumnMenuClose();
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                        Edit Status
+                      </MenuItem>
+                      {/* You can add more options here, like "Delete Column" */}
+                    </Menu>
+
+
+                  </ColumnHeader>
+                  {/* {showAddTaskField[column.value] && ( */}
+                  <TextField
+                    label="Add Task"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    value={newTasks[column.value]}
+                    onChange={(e) => handleChange(e, column.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleCreateTask(column.value)
+                    }
+                    sx={{ mt: 1 }}
+                  />
                   {/* )} */}
                   <Box sx={{ mt: 2 }}>
                     {loading ? (
@@ -526,21 +559,19 @@ const KanbanView = ({ workspaceId, projectId }) => {
                           >
                             {(provided) => (
                               <TaskCard
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                onClick={() => handleSingleClick(task)}
-                                onDoubleClick={() => handleDoubleClick(task)}
-                              >
-                                <Typography
-                                  sx={{ flexGrow: 1, marginRight: "8px" }}
-                                >
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              onClick={() => handleSingleClick(task)}
+                              onDoubleClick={() => handleDoubleClick(task)}
+                            >
+                              {/* Task Header with Task Name */}
+                              <TaskCardHeader>
+                                <Typography variant="body1" fontWeight="bold">
                                   {editTaskId === task._id ? (
                                     <TextField
                                       value={editedTaskName}
-                                      onChange={(e) =>
-                                        setEditedTaskName(e.target.value)
-                                      }
+                                      onChange={(e) => setEditedTaskName(e.target.value)}
                                       size="small"
                                       onBlur={() => handleBlur(task._id)}
                                       autoFocus
@@ -549,41 +580,36 @@ const KanbanView = ({ workspaceId, projectId }) => {
                                     task.name
                                   )}
                                 </Typography>
+                              </TaskCardHeader>
+                            
+                              {/* Task Footer with Assignee, Due Date, and Subtask Count */}
+                              <TaskCardFooter>
                                 <BadgeWrapper>
-                                  {task.priority && (
-                                    <Chip
-                                      label={task.priority}
-                                      color={
-                                        task.priority === "High"
-                                          ? "error"
-                                          : task.priority === "Medium"
-                                            ? "warning"
-                                            : "default"
-                                      }
-                                      size="small"
-                                    />
-                                  )}
-                                  <Tooltip
-                                    title={
-                                      task.assigneePrimary || "Unassigned"
-                                    }
-                                    arrow
-                                  >
+                                  <Tooltip title={task.assigneePrimary || "Unassigned"} arrow>
                                     <Avatar
                                       sx={{
                                         width: 24,
                                         height: 24,
                                         bgcolor: "#ff5722",
-                                        cursor: "pointer",
                                       }}
                                     >
-                                      {task.assigneePrimary
-                                        ? task.assigneePrimary[0]
-                                        : "U"}
+                                      {task.assigneePrimary ? task.assigneePrimary[0] : "U"}
                                     </Avatar>
                                   </Tooltip>
+                                  <Typography variant="body2" color="textSecondary" ml={0}>
+                                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No Due Date"}
+                                  </Typography>
                                 </BadgeWrapper>
-                              </TaskCard>
+                            
+                                {/* Subtask Count Display with Icon */}
+                                <TaskSubtaskCount>
+                                  <ChecklistIcon fontSize="small" sx={{ mb: 0.5, color: "#757575" }} />
+                                  <Typography variant="caption">
+                                    {task.subtasks.length} Subtasks
+                                  </Typography>
+                                </TaskSubtaskCount>
+                              </TaskCardFooter>
+                            </TaskCard>
                             )}
                           </Draggable>
                         )

@@ -68,6 +68,10 @@ const AssigneeMenu = ({ anchorEl, open, onClose, onAssigneeSelect }) => {
                     ),
                 }}
             />
+             {/* Add the "None" option */}
+             <MenuItem onClick={() => onAssigneeSelect(null)}>
+             Unassigned
+            </MenuItem>
             {loading ? (
                 <MenuItem disabled>
                     <CircularProgress size={24} />
