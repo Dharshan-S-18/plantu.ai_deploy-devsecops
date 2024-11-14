@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'PUT':
       try {
-        const { name, assignee, dueDate, priority, status, comments } = req.body;
+        const { name, description, assignee, dueDate, priority, status, comments, checklist, allocatedEffort, actualEffort } = req.body;
 
         // Find the workspace by ID
         const workspace = await Workspace.findById(workspaceId);
@@ -45,6 +45,10 @@ export default async function handler(req, res) {
         subtask.priority = priority || subtask.priority;
         subtask.status = status || subtask.status;
         subtask.comments = comments || subtask.comments;
+        subtask.checklist = checklist || subtask.checklist;
+        subtask.allocatedEffort = allocatedEffort || subtask.allocatedEffort;
+        subtask.actualEffort = actualEffort || subtask.actualEffort;
+        subtask.description = description || subtask.description;
 
         // Save the workspace with the updated subtask
         await workspace.save();

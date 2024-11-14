@@ -6,14 +6,29 @@ const CommentSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now } // The date the comment was made
 });
 
+const SubtaskCommentSchema = new mongoose.Schema({
+  user: { type: String, required: true }, // Store user ID or username
+  text: { type: String, required: true },  // The content of the comment
+  timestamp: { type: Date, default: Date.now } // The date the comment was made
+});
+
 // Define the Subtask Schema
 const SubtaskSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  description: { type: String },
   assignee: { type: String },
   dueDate: { type: Date },
   priority: { type: String },
+  allocatedEffort: { type: String }, // Store time in HH:mm:ss format
+  actualEffort: { type: String },       // Field for additional notes
   status: { type: String },
-  comments: { type: String }
+  comments: [SubtaskCommentSchema],
+  checklist: [
+    {
+      text: { type: String, required: true },
+      completed: { type: Boolean, default: false },
+    },
+  ],
 });
 
 // Define the Status Schema
@@ -33,11 +48,14 @@ const TaskSchema = new mongoose.Schema({
   dueDate: { type: Date },
   priority: { type: String },
   status: { type: String },
+  relation: [{ type: String }],
   dependency: { type: String },
   comments: [CommentSchema],
   allocatedEffort: { type: String }, // Store time in HH:mm:ss format
   actualEffort: { type: String },       // Field for additional notes
   description: { type: String }, // Field for description
+  labels: [{ type: String }],
+  milestone: { type: Boolean, default: false },
   checklist: [
     {
       text: { type: String, required: true },
@@ -62,7 +80,13 @@ const ProjectSchema = new mongoose.Schema({
   //   actualBudget: { type: Number },
   //   budgetEndDate: { type: Date },
   statusList: [StatusSchema], // Embed statusSchema here
-  tasks: [TaskSchema] // Embed Task schema here
+  tasks: [TaskSchema], // Embed Task schema here
+  labels: [
+    {
+      name: { type: String, required: true },
+      color: { type: String, default: "#FFFFFF" }, // Optional, for color coding labels
+    },
+  ],
 });
 
 // Define the Workspace Schema

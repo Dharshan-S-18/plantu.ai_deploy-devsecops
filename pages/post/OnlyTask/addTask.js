@@ -1,46 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import {
-  Box,
-  Typography,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  Avatar,
-  Button,
-  MenuItem, Menu,
-  Select,
-  Paper,
-  InputBase,
-  Tooltip,
-  Chip, Popover, Checkbox
+  Box, Typography, Divider, IconButton, Dialog, DialogTitle, DialogContent, TextField, Avatar, Button, MenuItem, Menu, Select, Paper, FormControl, Grid, ListItemIcon, ListItemText, List, ListItem, InputBase, Tooltip, Chip, Popover, Checkbox
 } from '@mui/material';
+import { ChromePicker } from 'react-color'; // Color picker library
 import Textarea from '@mui/joy/Textarea';
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import CloseIcon from '@mui/icons-material/Close';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ListIcon from '@mui/icons-material/List';
-import MapsUgcRoundedIcon from '@mui/icons-material/MapsUgcRounded';
+import LinkIcon from '@mui/icons-material/Link';
 import ChecklistIcon from '@mui/icons-material/Checklist';
+import EditIcon from '@mui/icons-material/Edit';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import RadioButtonCheckedOutlinedIcon from '@mui/icons-material/RadioButtonCheckedOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
+import MoreTimeOutlinedIcon from '@mui/icons-material/MoreTimeOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import LabelOutlinedIcon from '@mui/icons-material/LabelOutlined';
+import { Person } from '@mui/icons-material';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import FlagIcon from '@mui/icons-material/Flag';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import Subtask from './Subtask'; // Import the Subtask component
 import relativeTime from 'dayjs/plugin/relativeTime'; // Import the relativeTime plugin
-import FormatBoldIcon from '@mui/icons-material/FormatBold';
-import FormatItalicIcon from '@mui/icons-material/FormatItalic';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
-import InsertLinkIcon from '@mui/icons-material/InsertLink';
-import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
-import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
+import SaveIcon from '@mui/icons-material/Save';
+import PaletteIcon from '@mui/icons-material/Palette'; // Color picker icon
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import AssigneeMenu from '../../../components/AssigneeMenu';
+import SubtaskList from '../OnlyTask/SubtaskList';
+import CommentSection from '../OnlyTask/CommentSection';
 
 dayjs.extend(relativeTime); // Extend Day.js with the relativeTime plugin
 const filter = createFilterOptions();
@@ -53,25 +48,26 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
     startDate: dayjs(), // Default to current date
     dueDate: dayjs().add(7, 'day'), // Default to one week from current date
     status: '',
+    priority: 'Normal',
+    relation: [],
+    actualEffort: 0, // Default actual effort
+    allocatedEffort: 0, // Default allocated effort
     subactions: [],
     labels: [],
     dependencies: [],
     checklist: [],
     comments: [],
+    milestone: false,
   });
 
   const [task, setTask] = useState({});
-  const [subtasks, setSubtasks] = useState([]); // Initialize subtasks state
+  const router = useRouter();
   const [assigneeOptions, setAssigneeOptions] = useState([]);
-  const [openSubtaskModal, setOpenSubtaskModal] = useState(false); // State to control subtask modal visibility
-  const [selectedSubtask, setSelectedSubtask] = useState(null); // State to store the selected subtask data
-  const [newComment, setNewComment] = useState(''); // State for new comment input
-  const [comments, setComments] = useState([]); // State for storing all comments
   const [newStatus, setNewStatus] = useState(''); // State for new status input
+  const [selectedSubtask, setSelectedSubtask] = useState(null); // State to store the selected subtask data
+  const [openSubtaskModal, setOpenSubtaskModal] = useState(false); // State to control subtask modal visibility
   const [statusList, setStatusList] = useState([]);
   const [isSaveButtonEnabled, setIsSaveButtonEnabled] = useState(false);
-  const commentRef = useRef(null);
-  const [isPostDisabled, setIsPostDisabled] = useState(true);
   const [initialValues, setInitialValues] = useState({
     name: '',
     description: ''
@@ -80,6 +76,62 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
   const [anchorElStart, setAnchorElStart] = useState(null);
   const [anchorElDue, setAnchorElDue] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl2, setAnchorEl2] = useState(null);
+  const [anchorEl3, setAnchorEl3] = useState(null);
+  const [openStatusPicker, setOpenStatusPicker] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [priorityAnchorEl, setPriorityAnchorEl] = useState(null); // To handle opening/closing of priority menu
+  const isPriorityMenuOpen = Boolean(priorityAnchorEl);
+  const [editingField, setEditingField] = useState(null); // To track which field is in edit mode (e.g., 'actualEffort', 'allocatedEffort')
+  const [labels, setLabels] = useState([]); // Store available labels for the project
+  const [editLabelId, setEditLabelId] = useState(null); // Track which label is being edited
+  const [editLabelData, setEditLabelData] = useState({ name: '', color: '' });
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const textFieldRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [anchorElAllocatedEffort, setAnchorElAllocatedEffort] = useState(null);
+  const [anchorElActualEffort, setAnchorElActualEffort] = useState(null);
+
+  const handlePriorityClick = (event) => {
+    setPriorityAnchorEl(event.currentTarget); // Open menu at the chip's position
+  };
+
+  const handlePriorityClose = (priority) => {
+    setPriorityAnchorEl(null); // Close menu
+    if (priority) {
+      setTaskData((prevData) => ({ ...prevData, priority })); // Set selected priority
+      setIsSaveButtonEnabled(true);
+    }
+  };
+
+  const handleEffortChange = (field, value) => {
+    setTaskData((prevData) => ({
+      ...prevData,
+      [field]: Number(value),
+    }));
+    setIsSaveButtonEnabled(true);
+  };
+
+  // Open menu handlers
+  const handleAllocatedEffortClick = (event) => {
+    setAnchorElAllocatedEffort(event.currentTarget);
+  };
+  const handleActualEffortClick = (event) => {
+    setAnchorElActualEffort(event.currentTarget);
+  };
+
+  // Close menu handlers
+  const handleAllocatedEffortClose = () => {
+    setAnchorElAllocatedEffort(null);
+  };
+  const handleActualEffortClose = () => {
+    setAnchorElActualEffort(null);
+  };
+
+  // Handle saving the effort field when blur or Enter is pressed
+  const handleSaveEffort = (field) => {
+    setEditingField(null); // Close the input by setting `editingField` to null
+  };
 
   const handleStartDateClick = (event) => {
     setAnchorElStart(event.currentTarget);
@@ -94,6 +146,19 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
     setAnchorElDue(null);
   };
 
+  const handleOpenSubtaskModal = (subtask) => {
+    setSelectedSubtask(subtask);
+    setOpenSubtaskModal(true);
+  };
+
+  const handleCloseSubtaskModal = () => {
+    setSelectedSubtask(null);
+    setOpenSubtaskModal(false);
+  };
+
+  // Filter tasks based on the search term
+  const filteredTasks = tasks.filter(task => task.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
   const openStartDatePicker = Boolean(anchorElStart);
   const openDueDatePicker = Boolean(anchorElDue);
   const openMenu = Boolean(anchorEl);
@@ -103,8 +168,7 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
       fetchTask(taskId);
 
       // Fetch subtasks and comments for the current task using the API
-      fetchSubtasks(taskId);
-      fetchComments(taskId); // Fetch existing comments
+      // fetchSubtasks(taskId);
       fetchStatusList(projectId);
     } else {
       // This block is for when no taskId is provided, indicating task creation
@@ -115,14 +179,81 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
         startDate: dayjs(), // Default to current date
         dueDate: dayjs().add(7, 'day'), // Default to one week from current date
         status: '',
+        priority: 'Normal',
+        relation: '',
+        actualEffort: 0, // Default actual effort
+        allocatedEffort: 0, // Default allocated effort
         subactions: [],
         labels: [],
         dependencies: [],
         comments: [],
         checklist: [],
+        milestone: false,
       });
     }
   }, [taskId]);
+
+  useEffect(() => {
+    const fetchProjectLabels = async () => {
+      try {
+        const response = await axios.get(`/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/labels`);
+        setLabels(response.data.labels || []);
+      } catch (error) {
+        console.error('Failed to fetch project labels:', error);
+      }
+    };
+    fetchProjectLabels();
+  }, [projectId]);
+
+  // Handle selecting multiple labels for the task
+
+  const handleLabelChange = (labelId) => {
+    setTaskData((prevData) => ({
+      ...prevData,
+      labels: prevData.labels.includes(labelId) ? prevData.labels : [...prevData.labels, labelId],
+    }));
+    setIsSaveButtonEnabled(true); // Enable save button for changes
+  };
+
+  // Focus the TextField whenever entering edit mode
+  useEffect(() => {
+    if (editLabelId && textFieldRef.current) {
+      textFieldRef.current.focus();
+    }
+  }, [editLabelId]);
+
+  // Handle text input changes for label name
+  const handleLabelNameChange = (e) => {
+    const newName = e.target.value;
+    setEditLabelData((prev) => ({ ...prev, name: newName }));
+  };
+
+  // Start editing a label (name and color)
+  const handleEditLabel = (label) => {
+    setEditLabelId(label._id); // Track which label is being edited
+    setEditLabelData({ name: label.name, color: label.color || '#111' }); // Initialize with current label data
+  };
+
+  // Save the edited label (both name and color)
+  const handleSaveLabelEdit = async () => {
+    try {
+      await axios.put(`/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/labels`, {
+        labelId: editLabelId,
+        newLabelName: editLabelData.name,
+        newLabelColor: editLabelData.color,
+      });
+      setLabels((prevLabels) =>
+        prevLabels.map((label) =>
+          label._id === editLabelId
+            ? { ...label, name: editLabelData.name, color: editLabelData.color }
+            : label
+        )
+      );
+      setEditLabelId(null); // Stop editing after saving
+    } catch (error) {
+      console.error('Failed to save label edit:', error);
+    }
+  };
 
   // Function to handle adding a checklist item
   const handleAddChecklistItem = () => {
@@ -135,6 +266,21 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
       setIsSaveButtonEnabled(true);
     }
   };
+
+  // Fetch tasks for Relation dropdown
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await axios.get(`/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/task`);
+        setTasks(response.data.tasks); // Assuming response contains tasks in `tasks` field
+        console.log(response);
+      } catch (error) {
+        console.error('Failed to fetch tasks for Relation dropdown:', error);
+      }
+    };
+
+    fetchTasks();
+  }, [workspaceId, projectId]);
 
   // Function to handle removing a checklist item
   const handleRemoveChecklistItem = (index) => {
@@ -168,6 +314,7 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
         ...task,
         startDate: task.startDate ? dayjs(task.startDate) : dayjs(),
         dueDate: task.dueDate ? dayjs(task.dueDate) : dayjs().add(7, 'day'),
+        milestone: task.milestone || false, // Set milestone from fetched data
       };
       setTaskData(updatedTaskData);
       setInitialValues({
@@ -176,71 +323,6 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
       });
     } catch (error) {
       console.error('Failed to fetch task:', error);
-    }
-  };
-
-  // Function to fetch subtasks from MongoDB
-  const fetchSubtasks = async (taskId) => {
-    try {
-      const response = await axios.get(
-        `/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/task/${taskId}/subtasks`
-      );
-      setSubtasks(response.data.subtasks);
-    } catch (error) {
-      console.error('Failed to fetch subtasks:', error);
-    }
-  };
-
-  // Function to fetch comments from the backend
-  const fetchComments = async (taskId) => {
-    try {
-      const response = await axios.get(
-        `/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/task/${taskId}/comments`
-      );
-      setComments(response.data.comments); // Assuming API response contains a 'comments' array
-      commentRef.current.innerHTML = '';  // Clear the content after posting
-      setIsPostDisabled(true);  // Disable post button after posting
-    } catch (error) {
-      console.error('Failed to fetch comments:', error);
-    }
-  };
-
-  // Callback to trigger alerts
-  const handleSubtaskChange = () => {
-    //setAlert({ open: true, message, severity });
-    fetchSubtasks(taskId); // Refresh table after changes
-  };
-
-  // Function to wrap selected text with a tag for formatting
-  const applyTextFormat = (command, value = null) => {
-    document.execCommand(command, false, value);
-  };
-
-  const handleAddComment = async () => {
-    const commentHTML = commentRef.current.innerHTML.trim();  // Get HTML content
-    if (!commentHTML) return;
-
-    const newCommentData = {
-      text: commentHTML,
-      user: sessionStorage.getItem('email'),
-      timestamp: new Date(),
-    };
-
-    try {
-      const response = await axios.post(
-        `/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/task/${task._id}/comments`,
-        newCommentData
-      );
-
-      if (response.status === 200) {
-        setComments((prevComments) => [...prevComments, newCommentData]); // Add new comment to the top
-        setNewComment(''); // Clear the comment input field
-        commentRef.current.innerHTML = '';
-      } else {
-        console.error('Failed to add comment:', response.data.error);
-      }
-    } catch (error) {
-      console.error('Error adding comment:', error);
     }
   };
 
@@ -277,16 +359,6 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
     }
   };
 
-  const handleOpenSubtaskModal = (subtask) => {
-    setSelectedSubtask(subtask);
-    setOpenSubtaskModal(true);
-  };
-
-  const handleCloseSubtaskModal = () => {
-    setSelectedSubtask(null);
-    setOpenSubtaskModal(false);
-  };
-
   const handleStatusChange = (event, newValue) => {
     if (newValue && typeof newValue.value === 'string') {
       handleInputChange('status', newValue.value);
@@ -296,6 +368,7 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
     } else {
       handleInputChange('status', newValue);
     }
+    setOpenStatusPicker(false);
   };
 
   const handlefilterOptions = (options, params) => {
@@ -312,36 +385,12 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
     return filtered;
   };
 
-  useEffect(() => {
-    const fetchAssignees = async () => {
-      const hostname = window.location.hostname;
-        const extractedSubdomain = hostname.split('.')[0];
-      const accountId = sessionStorage.getItem('accountId');
-      if (!accountId) {
-        console.error('No accountId found in sessionStorage');
-        return;
-      }
-
-      try {
-        const response = await axios.get(
-          `/api/auth/getAgents?accountId=${accountId}&subdomain=${extractedSubdomain}`
-        );
-        setAssigneeOptions(response.data);
-      } catch (error) {
-        console.error('Failed to fetch assignees:', error);
-      }
-    };
-
-    fetchAssignees();
-  }, []);
-
   const handleInputChange = (field, value) => {
-    // Check if the field is for the comment, and handle that separately
-    if (field === 'comment') {
-      const content = commentRef.current.innerHTML.trim();
-      setIsPostDisabled(content === '');  // Enable/Disable "Post" button based on comment content
-      return; // Stop here, don't affect task data or "Save Changes" button
-    }
+    setTaskData((prevData) => ({
+      ...prevData,
+      [field]: value, // For relation, value will be an array of selected task IDs
+    }));
+    //setIsSaveButtonEnabled(true);
     setTaskData((prevData) => ({ ...prevData, [field]: value }));
 
     // Enable save button if relevant fields are changed
@@ -419,10 +468,82 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
   const handleAssigneeSelect = (assignee) => {
     setTaskData((prevData) => ({
       ...prevData,
-      assigneePrimary: assignee,
+      assigneePrimary: assignee || 'Unassigned',
     }));
     setIsSaveButtonEnabled(true);
     handleClose(); // Close the menu after selection
+  };
+
+  const handleAddDependency = (id) => {
+    setTaskData((prevData) => ({
+      ...prevData,
+      relation: prevData.relation.includes(id) ? prevData.relation : [...prevData.relation, id],
+    }));
+    setIsSaveButtonEnabled(true);
+    setAnchorEl2(null); // Close the menu after adding
+  };
+
+  const handleDeleteDependency = (idToRemove) => {
+    setTaskData((prevData) => ({
+      ...prevData,
+      relation: prevData.relation.filter((id) => id !== idToRemove),
+    }));
+    setIsSaveButtonEnabled(true);
+  };
+
+  // Function to handle task navigation
+  const handleNavigateToTask = (taskId) => {
+    //const taskUrl = `http://kakoli.localhost:3000/post/OnlyTask/workspace/${workspaceId}/projects/${projectId}/edit?taskId=${taskId}`;
+    window.open(`/post/OnlyTask/workspace/${workspaceId}/projects/${projectId}/edit?taskId=${taskId}`, '_blank'); // Navigate to the URL
+  };
+
+  const handleAddLabel = (id) => {
+    setTaskData((prevData) => ({
+      ...prevData,
+      labels: prevData.labels.includes(id) ? prevData.labels : [...prevData.labels, id],
+    }));
+    setIsSaveButtonEnabled(true);
+    setAnchorEl(null); // Close the menu after adding
+  };
+
+  const handleDeleteLabel = (idToRemove) => {
+    setTaskData((prevData) => ({
+      ...prevData,
+      labels: prevData.labels.filter((id) => id !== idToRemove),
+    }));
+    setIsSaveButtonEnabled(true);
+  };
+
+  const getStatusColor = (status) => {
+    const statusItem = statusList.find((item) => item.title === status);
+    return statusItem ? statusItem.color : '#e0f7fa'; // Default color if no match
+  };
+
+  const handleMilestoneToggle = async (event) => {
+    const newMilestoneValue = !taskData.milestone; // Get the checkbox value
+    console.log('checkbox value :', newMilestoneValue);
+
+    // Update the local state with the new value
+    setTaskData((prevData) => ({
+      ...prevData,
+      milestone: newMilestoneValue,
+    }));
+
+    // Immediately save the new milestone status to the database
+    try {
+      const response = await axios.put(`/api/OnlyTaskApi/workspace/${workspaceId}/project/${projectId}/task/${taskId}`, {
+        ...taskData,
+        milestone: newMilestoneValue,
+      });
+
+      if (response.status === 200) {
+        console.log('Milestone status updated successfully', response);
+      } else {
+        console.error('Failed to update milestone status');
+      }
+    } catch (error) {
+      console.error('Error updating milestone status:', error);
+    }
   };
 
   return (
@@ -455,10 +576,67 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
           borderTopRightRadius: 8,
         }}
       >
-        <Typography variant="h6" sx={{ color: '#fff' }}>{taskData.taskNumber}</Typography>
-        <IconButton onClick={onClose} sx={{ color: '#fff' }}>
-          <CloseIcon />
-        </IconButton>
+        <Box display="flex" alignItems="center">
+          {/* Milestone Checkbox */}
+          <Tooltip title="Milestone" arrow>
+            <Checkbox
+              checked={taskData.milestone} // Bind to the milestone state
+              onChange={handleMilestoneToggle}
+              icon={<StarBorderIcon sx={{ color: '#fff' }} />}
+              checkedIcon={<StarIcon sx={{ color: '#ffcc00' }} />}
+              sx={{ mr: 1 }}
+            />
+          </Tooltip>
+
+          <Typography variant="h6" sx={{ color: '#fff', ml: 0 }}>
+            {taskData.taskNumber}
+          </Typography>
+        </Box>
+        <Box display="flex" alignItems="center">
+          {/* Subtask icon to open subtask modal */}
+          <Tooltip title="Subtasks" arrow>
+            <IconButton onClick={handleOpenSubtaskModal} sx={{
+              color: '#fff',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'rotate(20deg)',
+              },
+            }}>
+              <AccountTreeIcon />
+            </IconButton>
+          </Tooltip>
+          {/* Link icon to copy URL */}
+          <Tooltip title="Copy Task Link" arrow>
+            <IconButton
+              onClick={() => {
+                const taskUrl = `${window.location.origin}/post/OnlyTask/workspace/${workspaceId}/projects/${projectId}/edit?taskId=${taskId}`;
+                navigator.clipboard.writeText(taskUrl); // Copy URL to clipboard
+              }}
+              sx={{
+                color: '#fff',
+                transition: 'transform 0.3s ease',
+                '&:hover': {
+                  transform: 'rotate(20deg)',
+                },
+              }}
+            >
+              <LinkIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Close icon */}
+          <Tooltip title="Task Close" arrow>
+            <IconButton onClick={onClose} sx={{
+              color: '#fff',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'rotate(20deg)',
+              },
+            }}>
+              <CloseIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </DialogTitle>
 
       <DialogContent
@@ -475,7 +653,7 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
             sx={{
               overflowY: 'auto',
               maxHeight: '100%',
-              flex: '5',
+              flex: '6',
               pr: 2,
               '&::-webkit-scrollbar': {
                 width: '8px',
@@ -490,20 +668,98 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
             }}
           >
             {/* Task Name */}
-            <Textarea
-              fullWidth
-              label="Task Name"
-              variant="plain"
-              value={taskData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              onBlur={handleTaskNameBlur} // Save on blur
-              sx={{ mb: 1, fontSize: '16px', fontWeight: 'bold' }}
-            />
+            <Box display="flex" alignItems="center" flexGrow={1}>
+              {/* Task Name */}
+              <Textarea
+                fullWidth
+                label="Task Name"
+                variant="plain"
+                value={taskData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                onBlur={handleTaskNameBlur} // Save on blur
+                sx={{ mb: 1, fontSize: '24px', fontWeight: 'bold', width: '1000px' }}
+              />
 
+
+              {/* Status Chip */}
+              <Tooltip title="Status" placement="bottom" arrow>
+                <Chip
+                  label={taskData.status || 'Select Status'}
+                  variant="outlined"
+                  icon={<RadioButtonCheckedOutlinedIcon sx={{ color: '#fff' }} />}
+                  onClick={() => setOpenStatusPicker(true)} // Opens the dialog when the chip is clicked
+                  sx={{
+                    cursor: 'pointer',
+                    bgcolor: getStatusColor(taskData.status),
+                    color: '#404040', // Set text color to white for better contrast
+                    mr: 2
+                  }}
+                />
+              </Tooltip>
+
+              {/* Dialog for Autocomplete */}
+              <Dialog open={openStatusPicker} onClose={handleClose}>
+                <DialogTitle>Select Status</DialogTitle>
+                <DialogContent>
+                  {/* Autocomplete for Status */}
+                  <Autocomplete
+                    value={taskData.status}
+                    onChange={(event, newValue) => {
+                      handleStatusChange(event, newValue);
+                      handleClose(); // Close the dialog on selection
+                    }}
+                    filterOptions={(options, params) => handlefilterOptions(options, params)}
+                    displayEmpty
+                    fullWidth
+                    options={statusList}
+                    getOptionLabel={(option) => {
+                      if (typeof option === 'string') {
+                        return option;
+                      }
+                      if (option.inputValue) {
+                        return option.inputValue;
+                      }
+                      return option.title;
+                    }}
+                    renderOption={(props, option) => {
+                      const { key, ...optionProps } = props;
+                      return (
+                        <li key={key} {...optionProps}>
+                          {option.title}
+                        </li>
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} onFocus={() => setOpenStatusPicker(true)} sx={{ width: '200px' }} /> // Open on focus
+                    )}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              {/* Assignee Chip */}
+              <Tooltip title="Assignee" placement="bottom" arrow>
+                <Chip
+                  label={taskData.assigneePrimary || 'Unassigned'}
+                  onClick={handleClick}
+                  variant="outlined"
+                  icon={<Person />}
+                  sx={{ cursor: 'pointer', bgcolor: taskData.assigneePrimary ? '#e0f7fa' : '#f5f5f5', mr: 2 }}
+                />
+              </Tooltip>
+
+              {/* Render the Assignee Menu */}
+              <AssigneeMenu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                assigneeOptions={assigneeOptions}
+                onAssigneeSelect={handleAssigneeSelect}
+              />
+            </Box>
             {/* Description */}
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <ArticleOutlinedIcon sx={{ mr: 1 }} /> {/* Adjust margin as needed */}
-              <Typography variant="subtitle1" sx={{ fontSize: '16px', fontWeight: '600' }}>Description</Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '13px', fontWeight: '600' }}>Description</Typography>
             </Box>
             <Textarea
               fullWidth
@@ -517,203 +773,97 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
               sx={{ mb: 2 }}
             />
 
-            {/* Subactions */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ListIcon sx={{ mr: 1 }} />
-              <Typography variant="subtitle1" sx={{ fontSize: '16px', fontWeight: '600' }}>Subtask</Typography>
-            </Box>
-            <Button startIcon={<AddIcon />} sx={{ mb: 2 }} onClick={() => handleOpenSubtaskModal({})}>
-              New subtask
-            </Button>
-
-            {/* List of Subtasks */}
-            {/* {subtasks.map((subtask) => ( */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {subtasks.map((subtask) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 1 }}>
+              {/* Priority Field (Chip style) */}
+              {/* <Grid item xs={12} md={6}> */}
+              <Tooltip title="Priority" placement="top" arrow>
                 <Chip
-                  key={subtask._id}
-                  label={subtask.name}
-                  onClick={() => handleOpenSubtaskModal(subtask)}
-                  sx={{ cursor: 'pointer' }}
+                  label={taskData.priority}
+                  variant="outlined"
+                  icon={<FlagIcon />} // Example icon
+                  onClick={handlePriorityClick} // Click to open the menu
+                  sx={{ cursor: 'pointer', bgcolor: '#e0f7fa', mr: 2 }} // Customize background color if desired
                 />
-              ))}
-            </Box>
-            {/* ))} */}
-
-            {/* Comments */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <MapsUgcRoundedIcon sx={{ mr: 1 }} /> {/* Adjust margin as needed */}
-              <Typography variant="subtitle1" sx={{ fontSize: '16px', fontWeight: '600' }}>Comments</Typography>
-            </Box>
-            <Box sx={{
-              mt: 2,
-              mb: 2,
-              maxHeight: '200px',
-              overflowY: 'auto',
-              '&::-webkit-scrollbar': { width: '6px' },
-              '&::-webkit-scrollbar-track': { background: '#f0f0f0' },
-              '&::-webkit-scrollbar-thumb': { background: '#b0b0b0', borderRadius: '4px' },
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#b0b0b0 #f0f0f0',
-            }}>
-              {comments.map((comment, index) => (
-                <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                  <Avatar sx={{ mr: 2 }}>{comment.user ? comment.user.charAt(0).toUpperCase() : 'U'}</Avatar>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: '600' }}>
-                      {comment.user || 'Unknown User'} {comment.timestamp ? dayjs(comment.timestamp).fromNow() : ''}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      component="div"
-                      dangerouslySetInnerHTML={{ __html: comment.text }}  // Safely render the HTML content
-                    />
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-            {/* Comment Input Field Styled Like the Image */}
-            <Box
-              component={Paper}
-              sx={{
-                position: 'sticky',  // Make the comment input sticky
-                bottom: 0,  // Stick it to the bottom of the dialog
-                display: "flex",
-                alignItems: "center",
-                border: "1px solid #cfcfcf",
-                borderRadius: "5px",
-                p: 1,
-                mt: 2,
-              }}
-            >
-              {/* Formatting Icons */}
-              <Tooltip title="Bold">
-                <IconButton onClick={() => applyTextFormat('bold')}>
-                  <FormatBoldIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Italic">
-                <IconButton onClick={() => applyTextFormat('italic')}>
-                  <FormatItalicIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Bulleted List">
-                <IconButton onClick={() => applyTextFormat('insertUnorderedList')}>
-                  <FormatListBulletedIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Numbered List">
-                <IconButton onClick={() => applyTextFormat('insertOrderedList')}>
-                  <FormatListNumberedIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Link">
-                <IconButton onClick={() => {
-                  const url = prompt('Enter the URL', 'http://');
-                  if (url) {
-                    applyTextFormat('createLink', url);
-                  }
-                }}>
-                  <InsertLinkIcon />
-                </IconButton>
               </Tooltip>
 
-              {/* Rich Text HTML Comment Input */}
-              <Box
-                ref={commentRef}
-                contentEditable={true}  // Enable rich text editing
-                placeholder="Add a comment..."
-                sx={{
-                  ml: 1,
-                  flex: 1,
-                  p: 1,
-                  minHeight: '40px',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '4px',
-                  outline: 'none',
-                  '&:empty:before': { content: 'attr(placeholder)', color: '#9e9e9e' },
-                }}
-                onInput={() => handleInputChange('comment')}  // Listen for changes to enable/disable Post button
-              />
-
-              {/* Post Button */}
-              <Button
-                variant="contained"
-                sx={{ ml: 2 }}
-                onClick={handleAddComment}
-                disabled={isPostDisabled}  // Enable/Disable based on content
-              >
-                Post
-              </Button>
-            </Box>
-            {/* </Box> */}
-          </Box>
-
-          {/* Right Column - Sticky */}
-          <Box
-            sx={{
-              position: 'sticky',
-              top: 0,
-              flex: '5',
-              alignSelf: 'flex-start',
-              minWidth: '200px',
-              maxWidth: '350px',
-              bgcolor: 'background.paper',
-              pl: 2,
-              borderLeft: '1px solid #ddd',
-            }}
-          >
-            {/* Assignee */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <PersonOutlineOutlinedIcon sx={{ mr: 1 }} />
-            <Typography variant="subtitle1" sx={{ fontSize: '16px', fontWeight: '600' }}>Assignee</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              {/* Avatar and Assignee Name Clickable */}
-              <IconButton onClick={handleClick}>
-                <Avatar sx={{ mr: 1, bgcolor: '#00264d' }}>
-                  {taskData.assigneePrimary ? taskData.assigneePrimary.charAt(0).toUpperCase() : 'U'}
-                </Avatar>
-              </IconButton>
-
-              <Typography variant="body1" onClick={handleClick} sx={{ cursor: 'pointer' }}>
-                {taskData.assigneePrimary || 'Unassigned'}
-              </Typography>
-
-              {/* Menu for Assignees */}
+              {/* Priority Menu */}
               <Menu
-                anchorEl={anchorEl}
-                open={openMenu}
-                onClose={handleClose}
-                anchorOrigin={{
-                  vertical: 'bottom',  // Position the menu below the clicked element
-                  horizontal: 'left',
-                }}
-                transformOrigin={{
-                  vertical: 'top',  // Ensure the menu pops up from the top
-                  horizontal: 'left',
-                }}
+                anchorEl={priorityAnchorEl}
+                open={isPriorityMenuOpen}
+                onClose={() => handlePriorityClose(null)} // Close without selection
               >
-                {assigneeOptions.map((assignee) => (
-                  <MenuItem key={assignee.id} onClick={() => handleAssigneeSelect(assignee.name)}>
-                    {/* <Avatar sx={{ mr: 1, bgcolor: '#ff5722' }}>{assignee.name.charAt(0).toUpperCase()}</Avatar> */}
-                    {assignee.name}
-                  </MenuItem>
-                ))}
+                <MenuItem onClick={() => handlePriorityClose('Urgent')}>Urgent</MenuItem>
+                <MenuItem onClick={() => handlePriorityClose('Medium')}>Medium</MenuItem>
+                <MenuItem onClick={() => handlePriorityClose('Low')}>Low</MenuItem>
+                <MenuItem onClick={() => handlePriorityClose('Normal')}>Normal</MenuItem>
               </Menu>
-            </Box>
+              {/* </Grid> */}
 
-            {/* Date Picker */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <CalendarMonthOutlinedIcon sx={{ mr: 1 }} />
-            <Typography variant="subtitle1" sx={{ fontSize: '16px', fontWeight: '600' }}>Dates</Typography>
-            </Box>
-            <Box sx={{ mb: 2, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-              <Chip
-                label={`Start Date: ${taskData.startDate ? taskData.startDate.format('DD/MM/YYYY') : 'Select Start Date'}`}
-                onClick={handleStartDateClick}
-                sx={{ mb: 1 }}
-              />
+
+              {/* Allocated Effort Chip */}
+              <Tooltip title="Allocated Effort">
+                <Chip
+                  label={`${taskData.allocatedEffort} hours`}
+                  onClick={handleAllocatedEffortClick}
+                  icon={<MoreTimeOutlinedIcon />}
+                  sx={{ cursor: 'pointer', mr: 2 }}
+                />
+              </Tooltip>
+              <Menu
+                anchorEl={anchorElAllocatedEffort}
+                open={Boolean(anchorElAllocatedEffort)}
+                onClose={handleAllocatedEffortClose}
+              >
+                <Box sx={{ padding: 2 }}>
+                  <TextField
+                    label="Allocated Effort (hours)"
+                    type="number"
+                    value={taskData.allocatedEffort}
+                    onChange={(e) => handleEffortChange('allocatedEffort', e.target.value)}
+                    fullWidth
+                    autoFocus
+                  />
+                </Box>
+              </Menu>
+
+              {/* Actual Effort Chip */}
+              {/* Actual Effort Chip */}
+              <Tooltip title="Actual Effort">
+                <Chip
+                  label={`${taskData.actualEffort} hours`}
+                  onClick={handleActualEffortClick}
+                  icon={<MoreTimeOutlinedIcon />}
+                  sx={{ cursor: 'pointer', mr: 2 }}
+                />
+              </Tooltip>
+              <Menu
+                anchorEl={anchorElActualEffort}
+                open={Boolean(anchorElActualEffort)}
+                onClose={handleActualEffortClose}
+              >
+                <Box sx={{ padding: 2 }}>
+                  <TextField
+                    label="Actual Effort (hours)"
+                    type="number"
+                    value={taskData.actualEffort}
+                    onChange={(e) => handleEffortChange('actualEffort', e.target.value)}
+                    fullWidth
+                    autoFocus
+                  />
+                </Box>
+              </Menu>
+
+              {/* Start Date Chip */}
+              <Tooltip title="Start Date" placement="top" arrow>
+                <Chip
+                  label={`${taskData.startDate ? taskData.startDate.format('DD/MM/YYYY') : 'Select Start Date'}`}
+                  variant="outlined"
+                  icon={<CalendarMonthOutlinedIcon />}
+                  onClick={handleStartDateClick}
+                  sx={{ mr: 2 }} // Margin to separate from the next chip
+                />
+              </Tooltip>
+
               <Popover
                 open={openStartDatePicker}
                 anchorEl={anchorElStart}
@@ -728,7 +878,7 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
                 }}
               >
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
+                  <DateCalendar
                     value={taskData.startDate}
                     onChange={(newValue) => handleDateChange('startDate', newValue)}
                     renderInput={(params) => <TextField {...params} />}
@@ -737,11 +887,17 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
                 </LocalizationProvider>
               </Popover>
 
-              <Chip
-                label={`Due Date: ${taskData.dueDate ? taskData.dueDate.format('DD/MM/YYYY') : 'Select Due Date'}`}
-                onClick={handleDueDateClick}
-                sx={{ mb: 1 }}
-              />
+              {/* Due Date Chip */}
+              <Tooltip title="Due Date" placement="top" arrow>
+                <Chip
+                  label={`${taskData.dueDate ? taskData.dueDate.format('DD/MM/YYYY') : 'Select Due Date'}`}
+                  variant="outlined"
+                  icon={<CalendarMonthOutlinedIcon />}
+                  onClick={handleDueDateClick}
+                  sx={{ mr: 2 }} // Margin to separate from the next chip
+                />
+              </Tooltip>
+
               <Popover
                 open={openDueDatePicker}
                 anchorEl={anchorElDue}
@@ -756,7 +912,7 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
                 }}
               >
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
+                  <DateCalendar
                     value={taskData.dueDate}
                     onChange={(newValue) => handleDateChange('dueDate', newValue)}
                     renderInput={(params) => <TextField {...params} />}
@@ -765,48 +921,193 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
                 </LocalizationProvider>
               </Popover>
             </Box>
+            {/* ))} */}
 
-            {/* Status */}
-            <Typography variant="subtitle1" sx={{ fontSize: '16px', fontWeight: '600' }}>Status</Typography>
-            <Autocomplete
-              value={taskData.status}
-              // onChange={(e) => handleInputChange('status', e.target.value)}
-              onChange={(event, newValue) =>
-                handleStatusChange(event, newValue)
-              }
-              filterOptions={(options, params) =>
-                handlefilterOptions(options, params)
-              }
-              displayEmpty
-              fullWidth
-              options={statusList}
-              sx={{ mb: 2 }}
-              getOptionLabel={(option) => {
-                // Value selected with enter, right from the input
-                if (typeof option === "string") {
-                  return option;
-                }
-                // Add "xxx" option created dynamically
-                if (option.inputValue) {
-                  return option.inputValue;
-                }
-                // Regular option
-                return option.title;
-              }}
-              renderOption={(props, option) => {
-                const { key, ...optionProps } = props;
-                return (
-                  <li key={key} {...optionProps}>
-                    {option.title}
-                  </li>
-                );
-              }}
-              renderInput={(params) => <TextField {...params} />}
-            />
+            {/* Relation Field with Custom Layout */}
+            <Box mt={2} sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', mr: 2, fontSize: '13px', fontWeight: '600' }}>
+                <SwapHorizOutlinedIcon sx={{ marginRight: '8px' }} /> Dependencies
+              </Typography>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                {taskData.relation.length > 0 ? (
+                  taskData.relation.map((id) => {
+                    const task = tasks.find((t) => t._id === id);
+                    return (
+                      <Box key={id} onClick={() => handleNavigateToTask(id)} sx={{ display: 'flex', alignItems: 'center', gap: 1, border: '1px solid #ddd', borderRadius: '16px', padding: '4px 8px', cursor: 'pointer' }}>
+                        {/* <Checkbox checked size="small" /> */}
+                        <Typography variant="body2">{task?.name || 'Unknown'}</Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mx: 0 }}>
+                          {dayjs(task?.startDate).format('MMM DD')} - {dayjs(task?.dueDate).format('MMM DD')}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent triggering handleNavigateToTask
+                            handleDeleteDependency(id);
+                          }}
+                        >
+                          <CloseIcon fontSize="small" sx={{ color: 'red' }} />
+                        </IconButton>
+                      </Box>
+                    );
+                  })
+                ) : (
+                  <Typography color="textSecondary" onClick={(e) => setAnchorEl2(e.currentTarget)}>Add dependencies</Typography>
+                )}
+
+                {/* Add icon to open menu */}
+                <Tooltip title="Add another dependency" arrow>
+                  <IconButton size="small" onClick={(e) => setAnchorEl2(e.currentTarget)}>
+                    <AddIcon fontSize="small" sx={{ color: 'green' }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+
+              {/* Menu for adding dependencies */}
+              <Menu
+                anchorEl={anchorEl2}
+                open={Boolean(anchorEl2)}
+                onClose={() => setAnchorEl2(null)}
+                PaperProps={{ style: { maxHeight: 300, overflowY: 'auto' } }}
+              >
+                <MenuItem>
+                  <InputBase
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{ width: '100%', padding: '8px' }}
+                  />
+                </MenuItem>
+                {filteredTasks.map((task) => (
+                  <MenuItem key={task._id} onClick={() => handleAddDependency(task._id)}>
+                    <ListItemIcon>
+                      <Checkbox checked={taskData.relation.includes(task._id)} size="small" />
+                    </ListItemIcon>
+                    <ListItemText primary={task.name} />
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Box>
+            <Box mt={2} sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', mr: 2, fontSize: '13px', fontWeight: '600' }}>
+                <LabelOutlinedIcon sx={{ marginRight: '8px' }} /> Label
+              </Typography>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                {taskData.labels.length > 0 ? (
+                  taskData.labels.map((id) => {
+                    const label = labels.find((lbl) => lbl._id === id);
+                    return (
+                      <Box
+                        key={id}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          border: '1px solid #ddd',
+                          borderRadius: '16px',
+                          padding: '4px 8px',
+                          backgroundColor: label ? label.color : '#ccc',
+                          color: '#fff',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Typography variant="body2">{label?.name || 'Unknown'}</Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent dropdown opening
+                            handleDeleteLabel(id);
+                          }}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    );
+                  })
+                ) : (
+                  <Typography color="textSecondary">Add labels</Typography>
+                )}
+
+                {/* Add icon to open menu */}
+                <Tooltip title="Add another label" arrow>
+                  <IconButton size="small" onClick={(e) => setAnchorEl3(e.currentTarget)}>
+                    <AddIcon fontSize="small" sx={{ color: 'green' }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+
+              {/* Menu for adding labels */}
+              <Menu
+                anchorEl={anchorEl3}
+                open={Boolean(anchorEl3)}
+                onClose={() => setAnchorEl3(null)}
+                PaperProps={{ style: { maxHeight: 300, overflowY: 'auto' } }}
+              >
+                <MenuItem>
+                  <InputBase
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{ width: '100%', padding: '8px' }}
+                  />
+                </MenuItem>
+                {labels.map((label) => (
+                  <MenuItem key={label._id} value={label._id} onClick={() => handleLabelChange(label._id)}>
+                    {editLabelId === label._id ? (
+                      <Box display="flex" alignItems="center" width="100%">
+                        {/* Inline editing text field for label name */}
+                        <TextField
+                          value={editLabelData.name}
+                          onChange={handleLabelNameChange}
+                          fullWidth
+                          inputRef={textFieldRef}
+                        />
+                        {/* Color picker icon */}
+                        <IconButton onClick={() => setShowColorPicker((prev) => !prev)}>
+                          <PaletteIcon />
+                        </IconButton>
+                        {/* Conditionally render the ChromePicker */}
+                        {showColorPicker && (
+                          <ClickAwayListener onClickAway={() => setShowColorPicker(false)}>
+                            <Box position="absolute" zIndex={2} height="100%">
+                              <ChromePicker
+                                color={editLabelData.color}
+                                onChangeComplete={(color) => setEditLabelData((prev) => ({ ...prev, color: color.hex }))}
+                              />
+                            </Box>
+                          </ClickAwayListener>
+                        )}
+                        {/* Save button to save changes */}
+                        <IconButton onClick={handleSaveLabelEdit} sx={{ ml: 2 }}>
+                          <SaveIcon />
+                        </IconButton>
+                      </Box>
+                    ) : (
+                      <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
+                        <Checkbox
+                          checked={taskData.labels.includes(label._id)}
+                          onChange={(e) => {
+                            e.stopPropagation(); // Prevent MenuItem click event from firing
+                            handleLabelChange(label._id);
+                          }}
+                        />
+                        <ListItemText primary={label.name} style={{ color: label.color }} />
+                        <IconButton onClick={() => handleEditLabel(label)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Box>
+
             {/* Checklist Section */}
-            <Box sx={{ display: 'flex', alignItems: 'center'}}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 3 }}>
               <ChecklistIcon sx={{ mr: 1 }} />
-              <Typography variant="subtitle1" sx={{ fontSize: '16px', fontWeight: '600' }}>Checklist</Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '13px', fontWeight: '600' }}>Checklist</Typography>
             </Box>
             <Box sx={{ mb: 2 }}>
               {taskData.checklist.map((item, index) => (
@@ -823,35 +1124,59 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
                   </IconButton>
                 </Box>
               ))}
-
               {/* Input for adding new checklist item */}
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <TextField
+                  size="small"
                   value={newChecklistItem}
                   onChange={(e) => setNewChecklistItem(e.target.value)}
                   placeholder="Add a checklist item"
-                  fullWidth
+                //fullWidth
                 />
                 <IconButton onClick={handleAddChecklistItem} color="primary">
                   <AddIcon />
                 </IconButton>
               </Box>
             </Box>
-            <Button variant="contained" color="primary" onClick={handleSubmit} disabled={!isSaveButtonEnabled} >
+            {/* Subactions */}
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <ListIcon sx={{ mr: 1 }} />
+              <Typography variant="subtitle1" sx={{ fontSize: '13px', fontWeight: '600' }}>Subtask</Typography>
+            </Box>
+            {/* <Button startIcon={<AddIcon />} sx={{ mb: 2 }} onClick={() => handleOpenSubtaskModal({})}>
+              New subtask
+            </Button> */}
+            <SubtaskList
+              workspaceId={workspaceId}
+              projectId={projectId}
+              taskId={taskId}
+            />
+            <Button variant="contained" color="primary" onClick={handleSubmit} disabled={!isSaveButtonEnabled} sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', mt: 2 }} >
               Save Changes
             </Button>
+          </Box>
+
+          <Divider orientation="vertical" variant="middle" flexItem />
+          {/* Right Column - Sticky */}
+          <Box
+            sx={{
+              position: 'sticky',
+              top: 0,
+              flex: '4',
+              alignSelf: 'flex-start',
+              minWidth: '200px',
+              maxWidth: '550px',
+              bgcolor: 'background.paper',
+              pl: 2,
+              //borderLeft: '1px solid #ddd',
+            }}
+          >
+            {/* Comments */}
+            <CommentSection workspaceId={workspaceId} projectId={projectId} taskId={taskId} />
           </Box>
         </LocalizationProvider>
       </DialogContent>
 
-      {/* Submit Button */}
-      {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}> */}
-      {/* <Button variant="contained" color="primary" onClick={handleSubmit} disabled={!isSaveButtonEnabled} >
-          Save Changes
-        </Button> */}
-      {/* </Box> */}
-
-      {/* Subtask Modal Rendering */}
       {
         openSubtaskModal && selectedSubtask && (
           <Subtask
@@ -860,9 +1185,9 @@ const AddTaskModal = ({ workspaceId, projectId, taskId, onClose, open, onTaskCha
             taskId={task._id}
             projectId={projectId}
             workspaceId={workspaceId}
-            subtaskId={selectedSubtask._id}
-            subtask={selectedSubtask}
-            onSubtaskChange={handleSubtaskChange}
+          // subtaskId={selectedSubtask._id}
+          // subtask={selectedSubtask}
+          // onSubtaskChange={handleSubtaskChange}
           />
         )
       }

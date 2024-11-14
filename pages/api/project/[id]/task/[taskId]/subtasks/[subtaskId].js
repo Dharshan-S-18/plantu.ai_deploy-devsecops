@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
   if (method === 'PUT') {
     try {
-      const { name, assignee, dueDate, priority, status, comments } = req.body;
+      const { name, description, assignee, dueDate, priority, status, comments, checklist, allocatedEffort, actualEffort } = req.body;
 
       // Find the project by ID
       const project = await Project.findById(id);
@@ -32,12 +32,23 @@ export default async function handler(req, res) {
       }
 
       // Update the subtask fields
+      // subtask.name = name || subtask.name;
+      // subtask.assignee = assignee || subtask.assignee;
+      // subtask.dueDate = dueDate || subtask.dueDate;
+      // subtask.priority = priority || subtask.priority;
+      // subtask.status = status || subtask.status;
+      // subtask.comments = comments || subtask.comments;
+
       subtask.name = name || subtask.name;
       subtask.assignee = assignee || subtask.assignee;
       subtask.dueDate = dueDate || subtask.dueDate;
       subtask.priority = priority || subtask.priority;
       subtask.status = status || subtask.status;
       subtask.comments = comments || subtask.comments;
+      subtask.checklist = checklist || subtask.checklist;
+      subtask.allocatedEffort = allocatedEffort || subtask.allocatedEffort;
+      subtask.actualEffort = actualEffort || subtask.actualEffort;
+      subtask.description = description || subtask.description;
 
       // Save the project with the updated task and subtask
       await project.save();

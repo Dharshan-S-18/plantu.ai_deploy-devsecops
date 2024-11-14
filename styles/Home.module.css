@@ -197,3 +197,24 @@
 .workspace-name-container:hover .delete-icon {
   opacity: 1;
 }
+
+@keyframes walkRight {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(25%); }
+  50% { transform: translateX(50%); }
+  75% { transform: translateX(75%); }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+.walking-checkmark {
+  display: inline-block;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: walkRight 1.5s ease-in-out forwards;
+  font-size: 1.5em; /* Adjust size as desired */
+  color: green; /* Customize color */
+}
+
+
