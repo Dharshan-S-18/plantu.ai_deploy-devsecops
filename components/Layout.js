@@ -315,9 +315,11 @@ export default function Layout({ children }) {
     } else if (viewName === "project") {
       router.push("/post/projectDetails");
     } else if (viewName === "requirements") {
-      router.push("/post/directProjectDetails/requirement");
+      router.push("/post/directProjectDetails/requirements");
     } else if (viewName === "stakeholders") {
       router.push("/post/directProjectDetails/stakeholder");
+    } else if (viewName === "radi") {
+      router.push("/post/directProjectDetails/raid");
     }
   };
 

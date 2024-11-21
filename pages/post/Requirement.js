@@ -18,6 +18,7 @@ import {
   Grid,
   Paper,
   MenuItem,
+  Select,
   InputLabel,
   Menu,
   Dialog,
@@ -54,6 +55,7 @@ const RequirementForm = ({
   requirementId,
   onClose,
   onRequirementChange,
+  showProjectNameField
 }) => {
   const [requirement, setRequirement] = useState({
     requirementNo: "",
@@ -62,9 +64,13 @@ const RequirementForm = ({
     assignedTo: "",
     createdBy: "",
     status: "Open", // Default value for status
+    projectId: "",
   });
   const [message, setMessage] = useState("");
   const [editMode, setEditMode] = useState(false);
+  const [projectNames, setProjectNames] = useState([]); // State to store the list of project names
+  const [loading, setLoading] = useState(false); // Loading state for the API call
+  const [error, setError] = useState(''); // State for handling errors
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [attachments, setAttachments] = useState([]);
@@ -81,6 +87,26 @@ const RequirementForm = ({
   const [openMenu, setOpenMenu] = useState(false);
   const [statusMenuAnchorEl, setStatusMenuAnchorEl] = useState(null); // For Status Menu
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+
+  // Fetch project names from the API if the showProjectNameField is true
+  useEffect(() => {
+    if (showProjectNameField) {
+      const fetchProjectNames = async () => {
+        const accountId = sessionStorage.getItem('accountId');
+        setLoading(true);
+        try {
+          const response = await axios.get(`/api/project?accountId=${accountId}`); // Assuming this is the endpoint for fetching projects
+          setProjectNames(response.data.projects); // Set the fetched project names
+          setLoading(false);
+        } catch (error) {
+          setError('Failed to fetch projects');
+          setLoading(false);
+        }
+      };
+
+      fetchProjectNames();
+    }
+  }, [showProjectNameField]);
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
@@ -245,16 +271,17 @@ const RequirementForm = ({
     if (requirementId) {
       // If a requirementId is provided, populate the form for editing
       setRequirement({
-        requirementNo: requirementId.requirementNo || "", // Ensure raidId is a string
+        requirementNo: requirementId.requirementNo || "", // Ensure requirementId is a string
         description: requirementId.description || "",
         shortDescription: requirementId.shortDescription || "",
         assignedTo: requirementId.assignedTo || "",
         createdBy: requirementId.createdBy || "",
         status: requirementId.status || "",
+        projectId: requirementId.projectId || "",
       });
       setEditMode(true);
     } else {
-      // Generate a new RAID ID locally if not in edit mode
+      // Generate a new requirement ID locally if not in edit mode
       const newId = generateSequentialId();
       setRequirement((prevData) => ({ ...prevData, requirementNo: newId }));
     }
@@ -289,24 +316,53 @@ const RequirementForm = ({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const newRequirementData = {
+      ...requirement,
+      createdDate: new Date().toISOString(), // Set createdDate to the current timestamp
+    };
     try {
-      if (editMode) {
-        // Update existing RAID data
-        await axios.put(
-          `/api/project/${projectId}/requirement/${requirementId._id}`,
-          requirement
-        );
-        onRequirementChange("Requirement updated successfully", "success");
+      let response;
+  
+      if (requirementId) {
+        // Editing an existing requirement
+        if (requirement.projectId && requirement.projectId !== projectId) {
+          // If Project Name is updated (requirementData.projectId is different)
+          response = await axios.post(`/api/project/${requirement.projectId}/requirement`, newRequirementData);
+          console.log('requirement added to new project:', response.data);
+
+          // Step 2: After successful POST, delete the requirement from its original location
+        await axios.delete(`/api/directProjectApi/requirement/${requirementId._id}`);
+        console.log('requirement removed from the original location');
+        
+        } else if (projectId) {
+          // If Project Name is not updated (keep the requirement in the same project)
+          response = await axios.put(`/api/project/${projectId}/requirement/${requirementId._id}`, newRequirementData);
+          console.log('requirement updated under the same project:', response.data);
+        } else {
+          // If no project context, update requirement directly
+          response = await axios.put(`/api/directProjectApi/requirement/${requirementId._id}`, newRequirementData);
+          console.log('requirement updated directly:', response.data);
+        }
       } else {
-        // Create new RAID data
-        await axios.post(`/api/project/${projectId}/requirement`, requirement);
-        onRequirementChange("Requirement created successfully", "success");
+        // Creating a new requirement (unchanged logic)
+        if (requirement.projectId) {
+          response = await axios.post(`/api/project/${requirement.projectId}/requirement`, newRequirementData);
+          console.log('requirement added to project:', response.data);
+        } else if (projectId) {
+          // If opened from the UserTable and no projectId in requirementData, use the projectId passed from the parent
+          response = await axios.post(`/api/project/${projectId}/requirement`, newRequirementData);
+          console.log('requirement added to project from UserTable:', response.data);
+        } else {
+          response = await axios.post(`/api/directProjectApi/requirement`, newRequirementData);
+          console.log('requirement created without a project:', response.data);
+        }
       }
-      // onRequirementChange(); // Call to refresh the list
-      onClose(); // Close the form after submission
+  
+      onRequirementChange(requirementId ? 'Requirement Updated Successfully' : 'Requirement Created Successfully', 'success');
+      onClose();
     } catch (error) {
-      console.error("Error saving data:", error);
-      onRequirementChange("Error saving requirement", "error");
+      console.error('Failed to submit form:', error);
+      onRequirementChange('Error saving requirement', 'error');
     }
   };
 
@@ -354,6 +410,29 @@ const RequirementForm = ({
             <FormLabel>Requirement No</FormLabel>
             <Input value={requirement.requirementNo} readOnly />
           </FormControl>
+          {showProjectNameField && (
+            <FormControl fullWidth>
+              <FormLabel>Project Name</FormLabel>
+              {loading ? (
+                <Typography>Loading projects...</Typography>
+              ) : error ? (
+                <Typography color="error">{error}</Typography>
+              ) : (
+                <Select
+                  name="projectId"
+                  value={requirement.projectId}
+                  onChange={handleChange}
+                  
+                >
+                  {projectNames.map((project) => (
+                    <MenuItem key={project._id} value={project._id}>
+                      {project.projectId}
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
+            </FormControl>
+          )}
 
           <FormControl sx={{ mb: 2 }}>
             <FormLabel>Description</FormLabel>

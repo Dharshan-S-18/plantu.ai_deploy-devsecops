@@ -38,18 +38,22 @@ const generateSequentialId = (lastId) => {
   return `${baseId}${lastNumber}`;
 };
 
-const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
+const RaidForm = ({ projectId, raid, onClose, onRaidChange, showProjectNameField }) => {
   const [raidData, setRaidData] = useState({
     raidId: "",
     description: "",
     type: "",
     assignedTo: "",
-    createdDate: "",
+    date: "",
     status: "",
+    projectId: "",
   });
 
   const [editMode, setEditMode] = useState(false);
   const [userOptions, setUserOptions] = useState([]); // State to store fetched user options
+  const [projectNames, setProjectNames] = useState([]); // State to store the list of project names
+  const [loading, setLoading] = useState(false); // Loading state for the API call
+  const [error, setError] = useState(''); // State for handling errors
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [attachments, setAttachments] = useState([]);
@@ -61,6 +65,26 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // sucess or error
   const [uploading, setUploading] = useState(false);
+
+   // Fetch project names from the API if the showProjectNameField is true
+   useEffect(() => {
+    if (showProjectNameField) {
+      const fetchProjectNames = async () => {
+        const accountId = sessionStorage.getItem('accountId');
+        setLoading(true);
+        try {
+          const response = await axios.get(`/api/project?accountId=${accountId}`); // Assuming this is the endpoint for fetching projects
+          setProjectNames(response.data.projects); // Set the fetched project names
+          setLoading(false);
+        } catch (error) {
+          setError('Failed to fetch projects');
+          setLoading(false);
+        }
+      };
+
+      fetchProjectNames();
+    }
+  }, [showProjectNameField]);
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
@@ -192,8 +216,9 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
         description: raid.description || "",
         type: raid.type || "",
         assignedTo: raid.assignedTo || "",
-        createdDate: raid.createdDate || "",
+        date: raid.date || "",
         status: raid.status || "",
+        projectId: raid.projectId || "",
       });
       setEditMode(true);
     } else {
@@ -237,29 +262,72 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
 
   const handleDateChange = (event) => {
     const { value } = event.target;
-    setRaidData((prevData) => ({ ...prevData, createdDate: value }));
+    setRaidData((prevData) => ({ ...prevData, date: value }));
   };
 
   // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const createdByEmail = sessionStorage.getItem('email'); // Retrieve the user's email from sessionStorage
+    if (!createdByEmail) {
+      console.error('User email not found in sessionStorage');
+      onRaidChange('Error: User email not found', 'error');
+      return;
+    }
+  
+    const newRaidData = {
+      ...raidData,
+      createdBy: createdByEmail, // Set createdBy to the email from sessionStorage
+      createdDate: new Date().toISOString(), // Set createdDate to the current timestamp
+    };
+
     try {
-      if (editMode) {
-        // Update existing RAID data
-        await axios.put(`/api/project/${projectId}/raid/${raid._id}`, raidData);
-        onRaidChange("RAID updated successfully", "success"); // Success alert
+      let response;
+  
+      if (raid) {
+        // Editing an existing raid
+        if (raidData.projectId && raidData.projectId !== projectId) {
+          // If Project Name is updated (raidData.projectId is different)
+          response = await axios.post(`/api/project/${raidData.projectId}/raid`, newRaidData);
+          console.log('raid added to new project:', response.data);
+
+          // Step 2: After successful POST, delete the raid from its original location
+        await axios.delete(`/api/directProjectApi/raid/${raid._id}`);
+        console.log('raid removed from the original location');
+        
+        } else if (projectId) {
+          // If Project Name is not updated (keep the raid in the same project)
+          response = await axios.put(`/api/project/${projectId}/raid/${raid._id}`, newRaidData);
+          console.log('raid updated under the same project:', response.data);
+        } else {
+          // If no project context, update raid directly
+          response = await axios.put(`/api/directProjectApi/raid/${raid._id}`, newRaidData);
+          console.log('raid updated directly:', response.data);
+        }
       } else {
-        // Create new RAID data
-        await axios.post(`/api/project/${projectId}/raid`, raidData);
-        onRaidChange("RAID created successfully", "success"); // Success alert
+        // Creating a new raid (unchanged logic)
+        if (raidData.projectId) {
+          response = await axios.post(`/api/project/${raidData.projectId}/raid`, newRaidData);
+          console.log('raid added to project:', response.data);
+        } else if (projectId) {
+          // If opened from the UserTable and no projectId in raidData, use the projectId passed from the parent
+          response = await axios.post(`/api/project/${projectId}/raid`, newRaidData);
+          console.log('raid added to project from UserTable:', response.data);
+        } else {
+          response = await axios.post(`/api/directProjectApi/raid`, newRaidData);
+          console.log('raid created without a project:', response.data);
+        }
       }
-      //onRaidChange();
-      onClose(); // Close the form after submission
+  
+      onRaidChange(raid ? 'raid Updated Successfully' : 'raid Created Successfully', 'success');
+      onClose();
     } catch (error) {
-      console.error("Error saving data:", error);
-      onRaidChange("Error saving RAID", "error"); // Error alert
+      console.error('Failed to submit form:', error);
+      onRaidChange('Error saving raid', 'error');
     }
   };
+  
 
   return (
     <Box
@@ -309,6 +377,31 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
             <Input value={raidData.raidId} name="raidId" readOnly />
           </FormControl>
 
+          {/* Conditionally render Project Name field */}
+          {showProjectNameField && (
+            <FormControl fullWidth>
+              <FormLabel>Project Name</FormLabel>
+              {loading ? (
+                <Typography>Loading projects...</Typography>
+              ) : error ? (
+                <Typography color="error">{error}</Typography>
+              ) : (
+                <Select
+                  name="projectId"
+                  value={raidData.projectId}
+                  onChange={handleChange}
+                  
+                >
+                  {projectNames.map((project) => (
+                    <MenuItem key={project._id} value={project._id}>
+                      {project.projectId}
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
+            </FormControl>
+          )}
+
           {/* Description */}
           <FormControl fullWidth margin="normal">
             <FormLabel>Description</FormLabel>
@@ -350,11 +443,11 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange }) => {
 
           {/* Created Date */}
           <FormControl fullWidth margin="normal">
-            <FormLabel>Created Date</FormLabel>
+            <FormLabel>Date</FormLabel>
             <Input
               type="date"
-              value={raidData.createdDate}
-              name="createdDate"
+              value={raidData.date}
+              name="date"
               onChange={handleDateChange}
               InputLabelProps={{ shrink: true }}
             />

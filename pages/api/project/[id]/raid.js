@@ -12,13 +12,13 @@ export default async function handler(req, res) {
 
   if (method === 'POST') {
     try {
-      const { raidId, description, assignedTo, type, createdDate, status  } = req.body;
+      const { raidId, description, assignedTo, type, date, status, createdBy, createdDate  } = req.body;
       const project = await Project.findById(id);
       if (!project) {
         return res.status(404).json({ success: false, error: 'Project not found' });
       }
 
-      const newRaid = { raidId, description, assignedTo, type, createdDate, status  };
+      const newRaid = { raidId, description, assignedTo, type, date, status, createdBy, createdDate  };
       project.raids.push(newRaid);
       console.log(newRaid);
       await project.save();

@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'PUT':
       try {
-        const { requirementNo, description, shortDescription, assignedTo, status, createdBy } = req.body;
+        const { requirementNo, description, shortDescription, assignedTo, status, createdBy, createdDate } = req.body;
 
         // Find the project by ID
         const project = await Project.findById(id);
@@ -33,6 +33,7 @@ export default async function handler(req, res) {
         requirement.createdBy = createdBy || requirement.createdBy;
         requirement.status = status || requirement.status;
         requirement.shortDescription = shortDescription || requirement.shortDescription;
+        requirement.createdDate = createdDate || requirement.createdDate;
        
 
         // Save the updated project

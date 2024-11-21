@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'PUT':
       try {
-        const { description, assignedTo, type, createdDate, status } = req.body;
+        const { description, assignedTo, type, date, status, createdBy, createdDate } = req.body;
 
         // Find the project by ID
         const project = await Project.findById(id);
@@ -30,8 +30,10 @@ export default async function handler(req, res) {
         raid.description = description || raid.description;
         raid.assignedTo = assignedTo || raid.assignedTo;
         raid.type = type || raid.type;
-        raid.createdDate = createdDate || raid.createdDate;
+        raid.date = date || raid.date;
         raid.status = status || raid.status;
+        raid.createdBy = createdBy || raid.createdBy;
+        raid.createdDate = createdDate || raid.createdDate;
 
         // Save the updated project
         await project.save();
