@@ -101,7 +101,7 @@ const EditProjectPage = () => {
     return (
         <Layout>
             <Box sx={{ display: 'flex', height: '100%' }}>
-                <Box sx={{ flex: 1, p: 3 }}>
+                <Box sx={{ flex: 1, p: 3, mt: 3 }}>
                     {renderContent()}
                 </Box>
                 <Box sx={{

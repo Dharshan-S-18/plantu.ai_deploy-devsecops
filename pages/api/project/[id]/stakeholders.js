@@ -11,13 +11,13 @@ export default async function handler(req, res) {
 
   if (method === 'POST') {
     try {
-      const { name, email, contact, type, role  } = req.body;
+      const { name, email, contact, type, role, createdBy, createdDate  } = req.body;
       const project = await Project.findById(id);
       if (!project) {
         return res.status(404).json({ success: false, error: 'Project not found' });
       }
 
-      const newStakeholder = { name, email, contact, type, role  };
+      const newStakeholder = { name, email, contact, type, role, createdBy, createdDate   };
       project.stakeholders.push(newStakeholder);
       await project.save();
 
@@ -42,4 +42,3 @@ export default async function handler(req, res) {
   }
 }
 
-//pages/api/projects/[projectId]/tasks/[taskId].js

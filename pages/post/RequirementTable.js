@@ -127,7 +127,7 @@ const RaidTable = ({ projectId }) => {
                       handleDeleteClick(requirement);
                     }}
                   >
-                    <DeleteIcon />
+                    <DeleteIcon color="error" />
                   </IconButton>
                 </TableCell>
               </TableRow>

@@ -20,6 +20,7 @@ const RequirementSchema = new mongoose.Schema({
   assignedTo: { type: String },
   createdBy: { type: String },
   status: { type: String },
+  createdDate: { type: Date, required: true },
 });
 
 // Define the Stakeholder Schema
@@ -28,8 +29,10 @@ const RaidSchema = new mongoose.Schema({
   description: { type: String },
   assignedTo: { type: String },
   type: { type: String },
-  createdDate: { type: Date },
+  date: { type: Date },
   status: { type: String },
+  createdBy: { type: String, required: true },
+  createdDate: { type: Date, required: true },
 });
 
 // Define the Stakeholder Schema
@@ -39,6 +42,8 @@ const StakeholdersSchema = new mongoose.Schema({
   contact: { type: Number },
   type: { type: String },
   role: { type: String },
+  createdDate: { type: Date },
+  createdBy: { type: String },
 });
 
 // Define the Subtask Schema
@@ -65,7 +70,7 @@ const TaskSchema = new mongoose.Schema({
   name: { type: String },
   assigneePrimary: { type: [String] }, // Changed to an array to store multiple assignees
   assigneeSecondary: { type: String },
-  startDate: { type:Date},
+  startDate: { type: Date },
   dueDate: { type: Date },
   priority: { type: String },
   status: { type: String },
