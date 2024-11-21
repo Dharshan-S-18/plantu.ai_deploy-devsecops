@@ -4,7 +4,7 @@ import {
   FormControl,
   FormLabel,
   Input,
-  Select,
+
   Option,
   Textarea,
   Tooltip,
@@ -14,8 +14,12 @@ import {
   Typography,
   Box,
   Button,
+  Chip,
   Grid,
   Paper,
+  MenuItem,
+  InputLabel,
+  Menu,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -37,6 +41,7 @@ import {
   UploadRounded,
 } from "@mui/icons-material";
 import { green } from "@mui/material/colors";
+import AssigneeMenu from '../../components/AssigneeMenu';
 
 const generateSequentialId = (lastId) => {
   const baseId = "RQ";
@@ -71,6 +76,11 @@ const RequirementForm = ({
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // sucess or error
   const [uploading, setUploading] = useState(false);
+  const [selectedAssignee, setSelectedAssignee] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);  // For controlling the Menu position
+  const [openMenu, setOpenMenu] = useState(false);
+  const [statusMenuAnchorEl, setStatusMenuAnchorEl] = useState(null); // For Status Menu
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
@@ -84,6 +94,44 @@ const RequirementForm = ({
   const handleClose = () => {
     setOpen(false);
   };
+
+  // Trigger AssigneeMenu on Chip click
+  const handleAssigneeClick = (event) => {
+    setAnchorEl(event.currentTarget); // Set the anchor element (chip)
+    setOpenMenu(true);  // Open the menu
+  };
+
+  // Handle assignee selection from the AssigneeMenu
+  const handleAssigneeSelect = (assignee) => {
+    setSelectedAssignee(assignee);  // Set the selected assignee
+    setRequirement((prevData) => ({ ...prevData, assignedTo: assignee }));  // Update the requirement state
+    setOpenMenu(false);  // Close the menu after selection
+  };
+
+  // Close the AssigneeMenu
+  const handleMenuClose = () => {
+    setOpenMenu(false);
+  };
+
+    // Status color mapping
+    const statusColorMap = {
+      Open: "#e0e0d1", // Gray color for Open
+      "In Progress": "#1a75ff", // Blue color for In Progress
+      Resolved: "#ff8000", // Orange color for Resolved
+      Closed: "#29a329", // Green color for Closed
+    };
+
+    // Handle Status chip click to open status menu
+    const handleStatusChipClick = (event) => {
+      setStatusMenuAnchorEl(event.currentTarget); // Set the anchor element (chip)
+      setStatusMenuOpen(true); // Open the menu
+    };
+  
+    // Handle status selection from the menu
+    const handleStatusSelect = (status) => {
+      setRequirement((prevData) => ({ ...prevData, status }));
+      setStatusMenuOpen(false); // Close the menu after selection
+    };
 
   // Fetch the attachments for the project
   useEffect(() => {
@@ -234,8 +282,9 @@ const RequirementForm = ({
   };
 
   // Specific handler for Select components
-  const handleSelectChange = (name) => (event, newValue) => {
-    setRequirement((prevData) => ({ ...prevData, [name]: newValue }));
+  const handleSelectChange = (name) => (event) => {
+    const { value } = event.target;
+    setRequirement((prevData) => ({ ...prevData, [name]: value }));
   };
 
   const handleSubmit = async (event) => {
@@ -327,39 +376,81 @@ const RequirementForm = ({
             />
           </FormControl>
 
-          <FormControl sx={{ mb: 2 }}>
-            <FormLabel>Assigned To</FormLabel>
-            <Select
-              name="assignedTo"
-              value={requirement.assignedTo}
-              onChange={handleSelectChange("assignedTo")}
-              placeholder="Select user"
-            >
-              <Option value="user1">User 1</Option>
-              <Option value="user2">User 2</Option>
-              <Option value="user3">User 3</Option>
-            </Select>
-          </FormControl>
+          {/* Assignee and Status Chips in Same Row */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+            {/* Assigned To Chip */}
+            <FormControl sx={{ mb: 2}}>
+              <FormLabel>Assigned To</FormLabel>
+              <Box display="flex" alignItems="center">
+                <Chip
+                  label={requirement.assignedTo || "Select Assignee"}
+                  onClick={handleAssigneeClick}
+                  color={requirement.assignedTo ? "primary" : "default"}
+                  //onDelete={() => setSelectedAssignee(null)}
+                  sx={{ mr: 1 }}
+                />
+              </Box>
+            </FormControl>
+           { /* AssigneeMenu component to display options when button is clicked */}
+            <AssigneeMenu
+              anchorEl={anchorEl}
+              open={openMenu}
+              onClose={handleMenuClose}
+              onAssigneeSelect={handleAssigneeSelect}
+            />
+
+            {/* Status Chip */}
+            <FormControl sx={{ mb: 2, mr:150  }}>
+              <FormLabel>Status</FormLabel>
+              <Box display="flex" alignItems="center">
+              <Chip
+                  label={requirement.status}
+                  onClick={handleStatusChipClick}
+                  style={{ backgroundColor: statusColorMap[requirement.status] }}
+                  sx={{ mr: 1 }}
+                />
+              </Box>
+              {/* Status Menu */}
+              <Menu
+                anchorEl={statusMenuAnchorEl}
+                open={statusMenuOpen}
+                onClose={() => setStatusMenuOpen(false)}
+              >
+                <MenuItem onClick={() => handleStatusSelect("Open")}>Open</MenuItem>
+                <MenuItem onClick={() => handleStatusSelect("In Progress")}>In Progress</MenuItem>
+                <MenuItem onClick={() => handleStatusSelect("Resolved")}>Resolved</MenuItem>
+                <MenuItem onClick={() => handleStatusSelect("Closed")}>Closed</MenuItem>
+              </Menu>
+            </FormControl>
+          </Box>
 
           <FormControl sx={{ mb: 2 }}>
             <FormLabel>Created By</FormLabel>
             <Input value={requirement.createdBy} readOnly />
           </FormControl>
 
-          <FormControl sx={{ mb: 2 }}>
+          {/* Status - Using Chip for Status */}
+          {/* <FormControl sx={{ mb: 2 }}>
             <FormLabel>Status</FormLabel>
-            <Select
-              name="status"
-              value={requirement.status}
-              onChange={handleSelectChange("status")}
-              placeholder="Select status"
+            <Box display="flex" alignItems="center">
+              <Chip
+                label={requirement.status}
+                onClick={handleStatusChipClick}
+                color="primary"
+                sx={{ mr: 1 }}
+              />
+            </Box>
+            <Menu
+              anchorEl={statusMenuAnchorEl}
+              open={statusMenuOpen}
+              onClose={() => setStatusMenuOpen(false)}
             >
-              <Option value="Open">Open</Option>
-              <Option value="In Progress">In Progress</Option>
-              <Option value="Resolved">Resolved</Option>
-              <Option value="Closed">Closed</Option>
-            </Select>
-          </FormControl>
+              <MenuItem onClick={() => handleStatusSelect("Open")}>Open</MenuItem>
+              <MenuItem onClick={() => handleStatusSelect("In Progress")}>In Progress</MenuItem>
+              <MenuItem onClick={() => handleStatusSelect("Resolved")}>Resolved</MenuItem>
+              <MenuItem onClick={() => handleStatusSelect("Closed")}>Closed</MenuItem>
+            </Menu>
+          </FormControl> */}
 
           {editMode && (
             <>

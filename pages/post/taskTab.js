@@ -46,7 +46,7 @@ const TaskTab = ({ projectId }) => {
   const router = useRouter();
   const { taskId } = router.query; // Retrieve taskId from URL
 
-  useEffect(() => {    
+  useEffect(() => {
     if (projectId) {
       fetchTasks();
     }
@@ -69,7 +69,7 @@ const TaskTab = ({ projectId }) => {
       setTasks(response.data.tasks); // Ensure your response data matches this structure
     } catch (error) {
       console.error('Error fetching tasks:', error);
-    }finally {
+    } finally {
       setIsLoading(false); // Stop loading after request completes
     }
   };
@@ -198,49 +198,49 @@ const TaskTab = ({ projectId }) => {
           <CircularProgress /> {/* Show loading indicator */}
         </Box>
       ) : (
-      view === 'kanban' ? (
-        <KanbanView tasks={tasks} projectId={projectId} />
-      ) : view === 'table' ? (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead style={{ backgroundColor: '#00264d', color: 'white', position: 'sticky', top: 0, zIndex: 1 }}>
-              <TableRow sx={{ '& th': { backgroundColor: '#00264d', color: 'white' } }}>
-                <TableCell>Task Name</TableCell>
-                <TableCell>Assignee</TableCell>
-                <TableCell>Due Date</TableCell>
-                <TableCell>Priority</TableCell>
-                <TableCell>Status</TableCell>
-                {/* <TableCell>Comments</TableCell> */}
-                <TableCell>Subtasks</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {tasks.map((task) => (
-                <React.Fragment key={task._id}>
-                  <TableRow onClick={() => handleModalOpen(task)}>
-                    <TableCell>
-                      <Box display="flex" alignItems="center">
-                        {/* <IconButton
+        view === 'kanban' ? (
+          <KanbanView tasks={tasks} projectId={projectId} />
+        ) : view === 'table' ? (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead style={{ backgroundColor: '#00264d', color: 'white', position: 'sticky', top: 0, zIndex: 1 }}>
+                <TableRow sx={{ '& th': { backgroundColor: '#00264d', color: 'white' } }}>
+                  <TableCell>Task Name</TableCell>
+                  <TableCell>Assignee</TableCell>
+                  <TableCell>Due Date</TableCell>
+                  <TableCell>Priority</TableCell>
+                  <TableCell>Status</TableCell>
+                  {/* <TableCell>Comments</TableCell> */}
+                  <TableCell>Subtasks</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tasks.map((task) => (
+                  <React.Fragment key={task._id}>
+                    <TableRow onClick={() => handleModalOpen(task)}>
+                      <TableCell>
+                        <Box display="flex" alignItems="center">
+                          {/* <IconButton
                           aria-label="expand row"
                           size="small"
                           onClick={(event) => handleExpandClick(task._id, event)}
                         >
                           {expandedTaskIds[task._id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         </IconButton> */}
-                        {task.milestone && (
-              <StarIcon style={{ color: 'gold', marginRight: 8 }} />
-            )}
-                        {task.name}
-                      </Box>
-                    </TableCell>
-                    <TableCell>{task.assigneePrimary}</TableCell>
-                    <TableCell>{new Date(task.dueDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{task.priority}</TableCell>
-                    <TableCell>{task.status}</TableCell>
-                    {/* <TableCell>{task.comments}</TableCell> */}
-                    <TableCell>{task.subtasks ? task.subtasks.length : 0}</TableCell>
-                  </TableRow>
-                  {/* <TableRow>
+                          {task.milestone && (
+                            <StarIcon style={{ color: 'gold', marginRight: 8 }} />
+                          )}
+                          {task.name}
+                        </Box>
+                      </TableCell>
+                      <TableCell>{task.assigneePrimary}</TableCell>
+                      <TableCell>{new Date(task.dueDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{task.priority}</TableCell>
+                      <TableCell>{task.status}</TableCell>
+                      {/* <TableCell>{task.comments}</TableCell> */}
+                      <TableCell>{task.subtasks ? task.subtasks.length : 0}</TableCell>
+                    </TableRow>
+                    {/* <TableRow>
                     <TableCell colSpan={7} style={{ paddingBottom: 0, paddingTop: 0 }}>
                       <Collapse in={expandedTaskIds[task._id]} timeout="auto" unmountOnExit>
                         <Box margin={1}>
@@ -276,16 +276,16 @@ const TaskTab = ({ projectId }) => {
                       </Collapse>
                     </TableCell>
                   </TableRow> */}
-                </React.Fragment>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : view === 'gantt' ? (
-        <GanttChartView projectId={projectId} task={selectedTask} /> // Render the Gantt chart view
-      ) : view === 'calendar' ? (
-        <CalendarView projectId={projectId} task={selectedTask} />
-      ) : null )}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : view === 'gantt' ? (
+          <GanttChartView projectId={projectId} task={selectedTask} /> // Render the Gantt chart view
+        ) : view === 'calendar' ? (
+          <CalendarView projectId={projectId} task={selectedTask} />
+        ) : null)}
 
       <Modal open={isModalOpen} onClose={handleModalClose}>
         <AddTask projectId={projectId} task={selectedTask} onClose={handleModalClose} onTaskCreated={handleTaskCreated} onTaskUpdated={handleTaskUpdated} />

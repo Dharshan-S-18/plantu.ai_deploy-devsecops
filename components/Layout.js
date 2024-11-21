@@ -151,7 +151,7 @@ const Drawer = styled(MuiDrawer, {
 export default function Layout({ children }) {
   const theme = useTheme();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [openInviteUser, setOpenInviteUser] = useState(false);
   const [agentName, setAgentName] = useState("");
   const [agentEmail, setAgentEmail] = useState("");
@@ -172,6 +172,7 @@ export default function Layout({ children }) {
   const [loading, setLoading] = useState(false); // State to manage loading
   const [workspaces, setWorkspaces] = useState([]); // State to store workspaces
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
+  const [isProjectExpanded, setIsProjectExpanded] = useState(false);
 
   // Update selected state based on the current route
   useEffect(() => {
@@ -313,6 +314,10 @@ export default function Layout({ children }) {
       router.push("/post/settings/drawer"); //drawer.js
     } else if (viewName === "project") {
       router.push("/post/projectDetails");
+    } else if (viewName === "requirements") {
+      router.push("/post/directProjectDetails/requirement");
+    } else if (viewName === "stakeholders") {
+      router.push("/post/directProjectDetails/stakeholder");
     }
   };
 
@@ -564,52 +569,78 @@ export default function Layout({ children }) {
               </ListItem>
             </Tooltip>
 
-            <Tooltip
-              title="Project"
-              placement="right"
-              arrow
-              style={{
-                display: "flex",
-                backgroundColor:
-                  selected === "project" ? "#1976d2" : "transparent",
-                "&:hover": {
-                  backgroundColor:
-                    selected != "project" ? "#ffffff33" : "#1976d2",
-                },
-              }}
-            >
+            <Tooltip title="Project" placement="right" arrow>
               <ListItem
                 button
-                onClick={(event) => {
-                  handleProjectMenuClick(event); // Pass the event object
-                  handleDrawerToggle(); // Toggle the drawer
-                }}
+                onClick={() => setIsProjectExpanded(!isProjectExpanded)}
                 sx={{
-                  "&:hover": {
-                    bgcolor: selected != "project" ? "#ffffff33" : "#1976d2",
-                  },
+                  bgcolor: selected === "project" ? "#1976d2" : "transparent",
+                  "&:hover": { bgcolor: selected !== "project" ? "#ffffff33" : "#1976d2" },
                 }}
               >
                 <ListItemIcon sx={{ color: "#ffffff" }}>
                   <CheckCircleIcon />
                 </ListItemIcon>
-                <ListItemText
-                  primary="Project"
-                  sx={{ color: "#ffffff", ml: -2 }}
-                />
+                <ListItemText primary="Project" sx={{ color: "#ffffff", ml: -2 }} />
+                {/* Plus icon for creating a new project */}
+                <Tooltip title="Create Project" placement="right" arrow>
+                  <IconButton
+                    onClick={() => {
+                      setModalOpen(true);
+                    }}
+                  >
+                    <AddIcon sx={{ color: "#ffffff" }} />
+                  </IconButton>
+                </Tooltip>
               </ListItem>
-              <Tooltip title="Create Project" placement="right" arrow>
-                <IconButton
-                  onClick={() => {
-                    setModalOpen(true);
-                  }}
-                >
-                  <AddIcon sx={{ color: "#ffffff" }} />
-                </IconButton>
-              </Tooltip>
             </Tooltip>
 
-            <Menu
+            {/* Display children options when "Project" is expanded */}
+            {isProjectExpanded && (
+              <Box sx={{
+                pl: 4,
+                maxHeight: "150px", // Set a fixed height for the scrollable area
+                overflowY: "auto", // Enables vertical scrolling
+                scrollbarWidth: "thin", // For Firefox to control scrollbar width
+                "&::-webkit-scrollbar": {
+                  width: "8px", // Custom scrollbar width for WebKit browsers (Chrome, Safari)
+                },
+                "&::-webkit-scrollbar-track": {
+                  backgroundColor: "#f0f0f0", // Background for the scrollbar track
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "#c0c0c0", // Color for the scrollbar thumb
+                  borderRadius: "10px", // Rounded scrollbar
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  backgroundColor: "#a0a0a0", // Slightly darker when hovered
+                },
+              }}>
+                <ListItem button onClick={() => handleNavigation("project")}>
+                  <ListItemText primary="All Projects" sx={{ color: "#ffffff" }} />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation("myProjects")}>
+                  <ListItemText primary="My Projects" sx={{ color: "#ffffff" }} />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation("tasks")}>
+                  <ListItemText primary="Tasks" sx={{ color: "#ffffff" }} />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation("stakeholders")}>
+                  <ListItemText primary="Stakeholders" sx={{ color: "#ffffff" }} />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation("timecard")}>
+                  <ListItemText primary="Timecard" sx={{ color: "#ffffff" }} />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation("requirements")}>
+                  <ListItemText primary="Requirements" sx={{ color: "#ffffff" }} />
+                </ListItem>
+                <ListItem button onClick={() => handleNavigation("radi")}>
+                  <ListItemText primary="Radi" sx={{ color: "#ffffff" }} />
+                </ListItem>
+              </Box>
+            )}
+
+            {/* <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={handleProjectMenuClose}
@@ -619,11 +650,11 @@ export default function Layout({ children }) {
               </MenuItem>
               <MenuItem onClick={() => setModalOpen(true)}>
                 My Projects
-                {/* <IconButton>
+                <IconButton>
                   <AddIcon />
-                </IconButton> */}
+                </IconButton>
               </MenuItem>
-            </Menu>
+            </Menu> */}
 
             <Tooltip title="User Management" placement="right" arrow>
               <ListItem
@@ -688,7 +719,7 @@ export default function Layout({ children }) {
                 button
                 onClick={() => {
                   handleWorkspaceClick(); // Fetch the workspaces
-                  handleDrawerToggle(); // Toggle the drawer
+                  // handleDrawerToggle(); // Toggle the drawer
                 }}
                 sx={{
                   "&:hover": {
@@ -766,7 +797,7 @@ export default function Layout({ children }) {
                         sx={{ color: "#ffffff" }}
                       />
                     </ListItem>
-<IconButton
+                    <IconButton
                       className="workspace-menu-icon"
                       sx={{
                         opacity: 0, // Hide icon by default

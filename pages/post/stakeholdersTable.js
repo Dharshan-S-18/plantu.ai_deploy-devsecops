@@ -127,7 +127,7 @@ const UserTable = ({ projectId }) => {
                       handleDeleteClick(row);
                     }}
                   >
-                    <DeleteIcon />
+                    <DeleteIcon color="error"/>
                   </IconButton>
                 </TableCell>
               </TableRow>

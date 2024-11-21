@@ -39,6 +39,8 @@ const StakeholdersSchema = new mongoose.Schema({
   contact: { type: Number },
   type: { type: String },
   role: { type: String },
+  createdDate: { type: Date },
+  createdBy: { type: String},
 });
 
 // Define the Subtask Schema
