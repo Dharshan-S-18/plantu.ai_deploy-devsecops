@@ -214,7 +214,23 @@ const SubtaskList = ({ workspaceId, projectId, taskId }) => {
                 `/api/project/${projectId}/task/${taskId}/subtasks`,
                 { name: newSubtaskName }
             );
-            setSubtasks((prevSubtasks) => [...prevSubtasks, response.data.subtask]);
+            const newSubtask = response.data.subtask;
+
+        // Update the subtasks state with the new subtask
+        setSubtasks((prevSubtasks) => [...prevSubtasks, newSubtask]);
+        
+        // Set the newly added subtask as the selected subtask to open its modal
+        setSelectedSubtask(newSubtask);
+
+        // Update the URL with the newly added subtask's ID so it can be opened
+        router.push(
+            {
+                pathname: router.pathname,
+                query: { ...router.query, subtaskId: newSubtask._id },
+            },
+            undefined,
+            { shallow: true }
+        );
             setNewSubtaskName('');
             setIsAddingSubtask(false);
         } catch (error) {

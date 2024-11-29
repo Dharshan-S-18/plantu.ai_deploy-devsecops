@@ -104,6 +104,8 @@ const ProjectSchema = new mongoose.Schema({
   totalBudget: { type: Number },
   budgetStartDate: { type: Date },
   businessCase: { type: String },
+  createdDate: { type: Date },
+  createdBy: { type: String },
   actualBudget: { type: Number },
   budgetEndDate: { type: Date },
   tasks: [TaskSchema], // Embed Task schema here

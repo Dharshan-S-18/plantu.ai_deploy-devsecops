@@ -173,6 +173,36 @@ export default function Layout({ children }) {
   const [workspaces, setWorkspaces] = useState([]); // State to store workspaces
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
   const [isProjectExpanded, setIsProjectExpanded] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState(""); // Track which menu is expanded
+  const [activeItem, setActiveItem] = useState(""); // Track the active menu item
+
+  const handleMenuToggle = (menu) => {
+    setExpandedMenu((prev) => (prev === menu ? "" : menu)); // Toggle the menu
+  };
+
+  const handleMenuItemClick = (item, path) => {
+    setActiveItem(item); // Set the active item
+    router.push(path); // Navigate to the corresponding path
+  };
+
+  useEffect(() => {
+    const path = router.pathname;
+    const menuItems = {
+      "/post/projectDetails": { menu: "projects", item: "allProjects" },
+      "/post/myProjects": { menu: "projects", item: "myProjects" },
+      "/post/tasks": { menu: "projects", item: "tasks" },
+      "/post/directProjectDetails/stakeholder": { menu: "projects", item: "stakeholders" },
+      "/post/timecard": { menu: "projects", item: "timecard" },
+      "/post/directProjectDetails/requirements": { menu: "projects", item: "requirements" },
+      "/post/directProjectDetails/raid": { menu: "projects", item: "radi" },
+    };
+
+    if (menuItems[path]) {
+      setExpandedMenu(menuItems[path].menu); // Expand the menu
+      setActiveItem(menuItems[path].item); // Highlight the item
+    }
+  }, [router.pathname]);
+
 
   // Update selected state based on the current route
   useEffect(() => {
@@ -571,76 +601,90 @@ export default function Layout({ children }) {
               </ListItem>
             </Tooltip>
 
-            <Tooltip title="Project" placement="right" arrow>
-              <ListItem
-                button
-                onClick={() => setIsProjectExpanded(!isProjectExpanded)}
-                sx={{
-                  bgcolor: selected === "project" ? "#1976d2" : "transparent",
-                  "&:hover": { bgcolor: selected !== "project" ? "#ffffff33" : "#1976d2" },
-                }}
-              >
-                <ListItemIcon sx={{ color: "#ffffff" }}>
-                  <CheckCircleIcon />
-                </ListItemIcon>
-                <ListItemText primary="Project" sx={{ color: "#ffffff", ml: -2 }} />
-                {/* Plus icon for creating a new project */}
-                <Tooltip title="Create Project" placement="right" arrow>
-                  <IconButton
-                    onClick={() => {
-                      setModalOpen(true);
-                    }}
-                  >
-                    <AddIcon sx={{ color: "#ffffff" }} />
-                  </IconButton>
-                </Tooltip>
-              </ListItem>
-            </Tooltip>
+            <List>
+              {/* Parent Item for Projects */}
+              <Tooltip title="Projects" placement="right" arrow>
+                <ListItem
+                  button
+                  onClick={() => handleMenuToggle("projects")} // Toggle expansion
+                  sx={{
+                    bgcolor: expandedMenu === "projects" ? "#1976d2" : "transparent",
+                    "&:hover": {
+                      bgcolor: expandedMenu !== "projects" ? "#ffffff33" : "#1976d2",
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: "#ffffff" }}>
+                    <CheckCircleIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Projects"
+                    sx={{ color: "#ffffff", ml: -2 }}
+                  />
+                  <Tooltip title="Create Project" placement="right">
+                    <IconButton
+                      sx={{ color: "#ffffff" }}
+                      onClick={() => setModalOpen(true)} // Handle opening the modal for creating a new project
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Tooltip>
+                </ListItem>
+              </Tooltip>
 
-            {/* Display children options when "Project" is expanded */}
-            {isProjectExpanded && (
-              <Box sx={{
-                pl: 4,
-                maxHeight: "150px", // Set a fixed height for the scrollable area
-                overflowY: "auto", // Enables vertical scrolling
-                scrollbarWidth: "thin", // For Firefox to control scrollbar width
-                "&::-webkit-scrollbar": {
-                  width: "8px", // Custom scrollbar width for WebKit browsers (Chrome, Safari)
-                },
-                "&::-webkit-scrollbar-track": {
-                  backgroundColor: "#f0f0f0", // Background for the scrollbar track
-                },
-                "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: "#c0c0c0", // Color for the scrollbar thumb
-                  borderRadius: "10px", // Rounded scrollbar
-                },
-                "&::-webkit-scrollbar-thumb:hover": {
-                  backgroundColor: "#a0a0a0", // Slightly darker when hovered
-                },
-              }}>
-                <ListItem button onClick={() => handleNavigation("project")}>
-                  <ListItemText primary="All Projects" sx={{ color: "#ffffff" }} />
-                </ListItem>
-                <ListItem button onClick={() => handleNavigation("myProjects")}>
-                  <ListItemText primary="My Projects" sx={{ color: "#ffffff" }} />
-                </ListItem>
-                <ListItem button onClick={() => handleNavigation("tasks")}>
-                  <ListItemText primary="Tasks" sx={{ color: "#ffffff" }} />
-                </ListItem>
-                <ListItem button onClick={() => handleNavigation("stakeholders")}>
-                  <ListItemText primary="Stakeholders" sx={{ color: "#ffffff" }} />
-                </ListItem>
-                <ListItem button onClick={() => handleNavigation("timecard")}>
-                  <ListItemText primary="Timecard" sx={{ color: "#ffffff" }} />
-                </ListItem>
-                <ListItem button onClick={() => handleNavigation("requirements")}>
-                  <ListItemText primary="Requirements" sx={{ color: "#ffffff" }} />
-                </ListItem>
-                <ListItem button onClick={() => handleNavigation("radi")}>
-                  <ListItemText primary="Radi" sx={{ color: "#ffffff" }} />
-                </ListItem>
-              </Box>
-            )}
+              {/* Child Items for Projects */}
+              {expandedMenu === "projects" && (
+                <Box
+                  sx={{
+                    pl: 4,
+                    maxHeight: "200px", // Set max height for scrolling
+                    overflowY: "auto", // Enable vertical scrolling
+                    scrollbarWidth: "thin", // Firefox-specific styling for scrollbar
+                    "&::-webkit-scrollbar": {
+                      width: "8px", // Custom scrollbar width for WebKit browsers
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      backgroundColor: "#0d1a33", // Track color
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      backgroundColor: "#737e8c", // Thumb color
+                      borderRadius: "10px", // Rounded scrollbar
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                      backgroundColor: "#8c96a3", // Hover color
+                    },
+                  }}
+                >
+                  {[
+                    { label: "All Projects", id: "allProjects", path: "/post/projectDetails" },
+                    { label: "My Projects", id: "myProjects", path: "/post/myProjects" },
+                    { label: "Tasks", id: "tasks", path: "/post/tasks" },
+                    { label: "Stakeholders", id: "stakeholders", path: "/post/directProjectDetails/stakeholder" },
+                    { label: "Timecard", id: "timecard", path: "/post/timecard" },
+                    { label: "Requirements", id: "requirements", path: "/post/directProjectDetails/requirements" },
+                    { label: "Radi", id: "radi", path: "/post/directProjectDetails/raid" },
+                  ].map((item) => (
+                    <ListItem
+                      button
+                      key={item.id}
+                      onClick={() => handleMenuItemClick(item.id, item.path)} // Handle item click
+                      sx={{
+                        bgcolor: activeItem === item.id ? "#1565c0" : "transparent",
+                        "&:hover": {
+                          bgcolor: activeItem !== item.id ? "#ffffff33" : "#1565c0",
+                        },
+                      }}
+                    >
+                      <ListItemText
+                        primary={item.label}
+                        sx={{ color: "#ffffff" }}
+                      />
+                    </ListItem>
+                  ))}
+                </Box>
+              )}
+            </List>
+
 
             {/* <Menu
               anchorEl={anchorEl}

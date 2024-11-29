@@ -296,11 +296,11 @@ const RaidForm = ({ projectId, raid, onClose, onRaidChange, showProjectNameField
         await axios.delete(`/api/directProjectApi/raid/${raid._id}`);
         console.log('raid removed from the original location');
         
-        } else if (projectId) {
+        } else if (projectId  && raid) {
           // If Project Name is not updated (keep the raid in the same project)
           response = await axios.put(`/api/project/${projectId}/raid/${raid._id}`, newRaidData);
           console.log('raid updated under the same project:', response.data);
-        } else {
+        } else if ( raid) {
           // If no project context, update raid directly
           response = await axios.put(`/api/directProjectApi/raid/${raid._id}`, newRaidData);
           console.log('raid updated directly:', response.data);

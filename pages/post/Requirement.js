@@ -334,11 +334,11 @@ const RequirementForm = ({
         await axios.delete(`/api/directProjectApi/requirement/${requirementId._id}`);
         console.log('requirement removed from the original location');
         
-        } else if (projectId) {
+        } else if (projectId && requirementId) {
           // If Project Name is not updated (keep the requirement in the same project)
           response = await axios.put(`/api/project/${projectId}/requirement/${requirementId._id}`, newRequirementData);
           console.log('requirement updated under the same project:', response.data);
-        } else {
+        } else if ( requirementId) {
           // If no project context, update requirement directly
           response = await axios.put(`/api/directProjectApi/requirement/${requirementId._id}`, newRequirementData);
           console.log('requirement updated directly:', response.data);
