@@ -323,7 +323,9 @@ const KanbanView = ({ projectId }) => {
                                         bgcolor: "#ff5722",
                                       }}
                                     >
-                                      {task.assigneePrimary ? task.assigneePrimary[0] : "U"}
+                                       {task.assigneePrimary
+      ? (String(task.assigneePrimary).split(' ')[0][0]) // Convert to string, then take first letter of the first word
+      : "U"} {/* If unassigned, show 'U' */}
                                     </Avatar>
                                   </Tooltip>
                                   <Typography variant="body2" color="textSecondary" ml={0}>

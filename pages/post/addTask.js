@@ -45,7 +45,7 @@ const AddTaskModal = ({
     dueDate: "",
     priority: "",
     Attachment: [],
-    status: "",
+    status: "To Do",
     dependencies: [],
     comments: [],
     description: "",
@@ -503,45 +503,45 @@ const AddTaskModal = ({
             </Typography>
           </Box>
           <Box display="flex" alignItems="center">
-          <Tooltip title="Subtasks" arrow>
-            <IconButton onClick={openSubtaskHandler} sx={{
-              color: '#fff',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'rotate(20deg)',
-              },
-            }}>
-              <AccountTreeIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Copy Task Link" arrow>
-            <IconButton
-              onClick={() => {
-                const taskUrl = `${window.location.origin}/post/projects/${projectId}/edit?section=Tasks&taskId=${taskId}`;
-                navigator.clipboard.writeText(taskUrl); // Copy URL to clipboard
-              }}
-              sx={{
+            <Tooltip title="Subtasks" arrow>
+              <IconButton onClick={openSubtaskHandler} sx={{
                 color: '#fff',
                 transition: 'transform 0.3s ease',
                 '&:hover': {
                   transform: 'rotate(20deg)',
                 },
-              }}
-            >
-              <LinkIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Task Close" arrow>
-          <IconButton onClick={onClose} sx={{
-              color: '#fff',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'rotate(20deg)',
-              },
-            }}>
-            <CloseIcon />
-          </IconButton>
-          </Tooltip>
+              }}>
+                <AccountTreeIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Copy Task Link" arrow>
+              <IconButton
+                onClick={() => {
+                  const taskUrl = `${window.location.origin}/post/projects/${projectId}/edit?section=Tasks&taskId=${taskId}`;
+                  navigator.clipboard.writeText(taskUrl); // Copy URL to clipboard
+                }}
+                sx={{
+                  color: '#fff',
+                  transition: 'transform 0.3s ease',
+                  '&:hover': {
+                    transform: 'rotate(20deg)',
+                  },
+                }}
+              >
+                <LinkIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Task Close" arrow>
+              <IconButton onClick={onClose} sx={{
+                color: '#fff',
+                transition: 'transform 0.3s ease',
+                '&:hover': {
+                  transform: 'rotate(20deg)',
+                },
+              }}>
+                <CloseIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
 
@@ -928,31 +928,35 @@ const AddTaskModal = ({
                   </Button>
                 </Box>
               </Paper>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <ListIcon sx={{ ml: 2 }} />
-                <Typography variant="subtitle1" sx={{ fontSize: '13px', fontWeight: '600' }}>Subtask</Typography>
-              </Box>
-              {/* <Button startIcon={<AddIcon />} sx={{ mb: 2 }} onClick={() => handleOpenSubtaskModal({})}>
+              {task && (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListIcon sx={{ ml: 2 }} />
+                    <Typography variant="subtitle1" sx={{ fontSize: '13px', fontWeight: '600' }}>Subtask</Typography>
+                  </Box>
+                  {/* <Button startIcon={<AddIcon />} sx={{ mb: 2 }} onClick={() => handleOpenSubtaskModal({})}>
               New subtask
               </Button> */}
-              <SubtaskList
-                //workspaceId={workspaceId}
-                projectId={projectId}
-                taskId={taskId}
-              />
+                  <SubtaskList
+                    //workspaceId={workspaceId}
+                    projectId={projectId}
+                    taskId={taskId}
+                  />
+                </>
+              )}
             </Grid>
             <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            p: 2,
-            // bgcolor: "background.paper",
-            // boxShadow: "0 -2px 6px rgba(0,0,0,0.2)",
-            // Remove sticky position properties
-          }}
-        >
-          {/* <Button
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                p: 2,
+                // bgcolor: "background.paper",
+                // boxShadow: "0 -2px 6px rgba(0,0,0,0.2)",
+                // Remove sticky position properties
+              }}
+            >
+              {/* <Button
             variant="outlined"
             color="secondary"
             onClick={openSubtaskHandler}
@@ -960,10 +964,10 @@ const AddTaskModal = ({
           >
             Add Subtask
           </Button> */}
-          <Button variant="contained" color="primary" onClick={handleFormSubmit}>
-            {task ? "Save Task" : "Create Task"}
-          </Button>
-        </Box>
+              <Button variant="contained" color="primary" onClick={handleFormSubmit}>
+                {task ? "Save Task" : "Create Task"}
+              </Button>
+            </Box>
           </Box>
           {/* </Box> */}
 

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination, Chip, Box, TextField, IconButton, InputAdornment  } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, Tooltip, TableHead, TableRow, Paper, TablePagination, Chip, Box, TextField, IconButton, InputAdornment } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search'; // Search icon
+import AddIcon from "@mui/icons-material/Add";
 import Layout from '../../components/Layout';
+import ProjectPage from '../post/project';
 import styles from '../../styles/Home.module.css';
 
 const ProjectsDetails = () => {
@@ -15,6 +17,7 @@ const ProjectsDetails = () => {
   const [searchQuery, setSearchQuery] = useState(''); // Search query
   const [searchOpen, setSearchOpen] = useState(false); // State to toggle search field visibility
   const [searchExpanded, setSearchExpanded] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -136,73 +139,88 @@ const ProjectsDetails = () => {
   return (
     <Layout>
       <div className={styles['button-container']}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Chip
-          label="All Projects"
-          variant="outlined"
-          onClick={() => setFilterMode('all')}
-          style={{
-            marginRight: '-1000px',
-            cursor: 'pointer',
-            backgroundColor: filterMode === 'all' ? '#00796b' : '#e0e0e0', // Change color when selected
-            color: filterMode === 'all' ? '#fff' : '#000',
-          }}
-        />
-        <Chip
-          label="My Projects"
-          variant="outlined"
-          onClick={() => setFilterMode('my')}
-          style={{
-            cursor: 'pointer',
-            backgroundColor: filterMode === 'my' ? '#00796b' : '#e0e0e0', // Change color when selected
-            color: filterMode === 'my' ? '#fff' : '#000',
-          }}
-        />
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', position: 'relative', mb:1 }}>
-        {/* Search Icon Button */}
-        {!searchExpanded && (
-            <IconButton onClick={() => setSearchExpanded(true)} sx={{ backgroundColor: '#ffffff', borderRadius: '50%', boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)', padding: '10px' }}>
-              <SearchIcon sx={{ color: '#3b82f6', fontSize: '24px' }} />
-            </IconButton>
-          )}
-
-          {/* Search Field */}
-          {searchExpanded && (
-            <TextField
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box display="flex" gap={2}> {/* Using gap for spacing between chips */}
+          <Tooltip title="Create Project" placement="top" arrow>
+            <Chip
+              // sx={{ ml:50 }}
+              label="Create Project"
               variant="outlined"
-              placeholder="Search Projectr....."
-              value={searchQuery}
-              fullWidth
-              autoFocus
-              onChange={handleSearch}
-              onBlur={() => setSearchExpanded(false)} // Close the field on blur
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#3b82f6' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                borderRadius: '50px',
-                backgroundColor: '#ffffff',
-                width: '300px',
-                transition: 'all 0.3s ease',
-                boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '50px',
-                  paddingLeft: '8px',
-                },
-                '& input': {
-                  padding: '10px',
-                },
-              }}
-            />
-          )}
+              icon={<AddIcon />}
+              onClick={() => setModalOpen(true)} // Handle opening the modal for creating a new project
+            >
+              
+              {/* </IconButton> */}
+            </Chip>
+          </Tooltip>
+          <Chip
+            label="All Projects"
+            variant="outlined"
+            onClick={() => setFilterMode('all')}
+            // sx={{ mr:80 }}
+            style={{
+              // marginRight: '-1000px',
+              cursor: 'pointer',
+              backgroundColor: filterMode === 'all' ? '#00796b' : '#e0e0e0', // Change color when selected
+              color: filterMode === 'all' ? '#fff' : '#000',
+            }}
+          />
+          <Chip
+            label="My Projects"
+            variant="outlined"
+            onClick={() => setFilterMode('my')}
+            style={{
+              cursor: 'pointer',
+              backgroundColor: filterMode === 'my' ? '#00796b' : '#e0e0e0', // Change color when selected
+              color: filterMode === 'my' ? '#fff' : '#000',
+            }}
+          />
           </Box>
-          </Box>
-      </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', position: 'relative', mb: 1 }}>
+            {/* Search Icon Button */}
+            {!searchExpanded && (
+              <IconButton onClick={() => setSearchExpanded(true)} sx={{ backgroundColor: '#ffffff', borderRadius: '50%', boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)', padding: '10px' }}>
+                <SearchIcon sx={{ color: '#3b82f6', fontSize: '24px' }} />
+              </IconButton>
+            )}
 
+            {/* Search Field */}
+            {searchExpanded && (
+              <TextField
+                variant="outlined"
+                placeholder="Search Projectr....."
+                value={searchQuery}
+                fullWidth
+                autoFocus
+                onChange={handleSearch}
+                onBlur={() => setSearchExpanded(false)} // Close the field on blur
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: '#3b82f6' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  borderRadius: '50px',
+                  backgroundColor: '#ffffff',
+                  width: '300px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '50px',
+                    paddingLeft: '8px',
+                  },
+                  '& input': {
+                    padding: '10px',
+                  },
+                }}
+              />
+            )}
+          </Box>
+        </Box>
+      </div>
+      <ProjectPage open={modalOpen} handleClose={() => setModalOpen(false)} />
       {viewMode === 'table' && renderTableView()}
     </Layout>
   );

@@ -79,6 +79,13 @@ const ProjectPage = ({ open, handleClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Validation for required fields
+  if (!project.status || !project.startDate || !project.endDate) {
+    setSnackbarMessage('Status, Start Date, and End Date are required fields.');
+    setSnackbarSeverity('error');
+    setSnackbarOpen(true);
+    return; // Prevent form submission if validation fails
+  }
 
       // Get the current user's email from sessionStorage
   const createdBy = sessionStorage.getItem("email");
@@ -189,7 +196,7 @@ const ProjectPage = ({ open, handleClose }) => {
                   name="description"
                   value={project.description}
                   onChange={handleChange}
-                  required
+                  
                 />
                 {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography>Team</Typography>
