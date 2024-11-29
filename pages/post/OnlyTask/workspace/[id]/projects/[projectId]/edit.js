@@ -37,6 +37,7 @@ import CalendarTab from "../../../../taskCalendar";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import dynamic from "next/dynamic";
 import format from "date-fns/format"; // Import date formatting function
+import AssigneeMenu from "../../../../../../../components/AssigneeMenu";
 
 // Import ReactQuill dynamically to prevent SSR issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -85,11 +86,9 @@ const EditProjectPage = () => {
     setSelectedFileKey(fileKey);
     setOpen(true);
   };
-
   const handleClose = () => {
     setOpen(false);
   };
-
   // Fetch the attachments for the project
   useEffect(() => {
     fetchAttachments();
@@ -226,37 +225,24 @@ const EditProjectPage = () => {
     }));
   };
 
-  // Agent-related handlers
+  // Open the AssigneeMenu when the assignee icon is clicked
   const handleAgentClick = (event) => {
-    setAnchorEl(event.currentTarget);
-    fetchAgents(); // Fetch agent list when menu is opened
+    setAnchorEl(event.currentTarget); // Set anchor for menu positioning
   };
 
+  // Close the AssigneeMenu
   const handleAgentClose = () => {
     setAnchorEl(null);
   };
 
-  const fetchAgents = async () => {
-    setLoadingAgents(true);
-    const hostname = window.location.hostname;
-    const extractedSubdomain = hostname.split(".")[0];
-    const accountId = sessionStorage.getItem("accountId");
-    if (!accountId) {
-      console.error("No accountId found in sessionStorage");
-      return;
-    }
-    try {
-      const response = await fetch(
-        `/api/auth/getAgents?accountId=${accountId}&subdomain=${extractedSubdomain}`
-      ); // Replace with your actual API endpoint for agents
-      const data = await response.json();
-      setAgents(data); // Assuming API returns an array of agents
-    } catch (error) {
-      console.error("Failed to fetch agents:", error);
-      setAgents([]);
-    } finally {
-      setLoadingAgents(false);
-    }
+  // Handle the agent selection from AssigneeMenu
+  const handleAgentSelect = (agentName) => {
+    setProjectUpdates((prev) => ({
+      ...prev,
+      assignedAgent: agentName || "Unassigned", // Set to agent name or "Unassigned"
+    }));
+    handleAgentClose(); // Close the menu after selection
+    handleSaveUpdates({ assignedAgent: agentName });
   };
 
   const handleMenuItemSelect = (agentName) => {
@@ -485,36 +471,41 @@ const EditProjectPage = () => {
 
   return (
     <Layout>
-      <Box sx={{ width: "100%", p: 0, gap: 0, mb: -1, marginTop: -1, }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ width: "100%", p: 0, gap: 0, mb: -1, marginTop: -1 }}>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
           <Tooltip title="Back" placement="right" arrow>
-            <IconButton onClick={handleBackClick} sx={{
-              mb: 1,
-              marginTop: -1,
-              width: 40, // Adjust the width
-              height: 40, // Adjust the height
-              borderRadius: '50%', // Makes it a circle
-              border: '2px solid', // Border width
-              borderColor: 'primary.main', // Border color
-              backgroundColor: 'transparent', // No fill color
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              '&:hover': {
-                borderColor: 'primary.dark', // Change border color on hover
-              },
-            }}>
+            <IconButton
+              onClick={handleBackClick}
+              sx={{
+                mb: 1,
+                marginTop: -1,
+                width: 40, // Adjust the width
+                height: 40, // Adjust the height
+                borderRadius: "50%", // Makes it a circle
+                border: "2px solid", // Border width
+                borderColor: "primary.main", // Border color
+                backgroundColor: "transparent", // No fill color
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                "&:hover": {
+                  borderColor: "primary.dark", // Change border color on hover
+                },
+              }}
+            >
               <ArrowBackIosIcon />
             </IconButton>
           </Tooltip>
-          <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}> {/* Added margin left for spacing */}
+          <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
+            {" "}
+            {/* Added margin left for spacing */}
             <Textarea
               variant="plain"
               size="small"
               value={projectUpdates.projectName}
               onChange={handleProjectNameChange}
               onBlur={handleProjectNameBlur} // Update on blur
-              sx={{ mb: 2, fontSize: '1.25rem', fontWeight: 'bold' }}
+              sx={{ mb: 2, fontSize: "1.25rem", fontWeight: "bold" }}
             />
             <Tooltip title="Description" placement="top" arrow>
               <IconButton onClick={handleDescriptionClick} sx={{ mb: 1 }}>
@@ -560,7 +551,10 @@ const EditProjectPage = () => {
               </IconButton>
             </Tooltip>
             <Tooltip title="Attachment" placement="top" arrow>
-              <IconButton sx={{ mb: 1 }} onClick={() => setAttachmentOpen(true)}>
+              <IconButton
+                sx={{ mb: 1 }}
+                onClick={() => setAttachmentOpen(true)}
+              >
                 <Attachment />
               </IconButton>
             </Tooltip>
@@ -641,35 +635,13 @@ const EditProjectPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Agent Selection Menu */}
-      <Menu
+      {/* AssigneeMenu Component */}
+      <AssigneeMenu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleAgentClose}
-      >
-        {loadingAgents ? (
-          <MenuItem>
-            <CircularProgress size={24} />
-          </MenuItem>
-        ) : agents.length > 0 ? (
-          agents.map((agent) => (
-            <MenuItem
-              key={agent.id}
-              onClick={() => handleMenuItemSelect(agent.name)}
-              selected={projectUpdates.assignedAgent === agent.name} // Highlight selected agent
-            >
-              {projectUpdates.assignedAgent === agent.name && (
-                <ListItemIcon>
-                  <CheckIcon />
-                </ListItemIcon>
-              )}
-              {agent.name} {/* Display agent name */}
-            </MenuItem>
-          ))
-        ) : (
-          <MenuItem>No Agents Available</MenuItem>
-        )}
-      </Menu>
+        onAssigneeSelect={handleAgentSelect} // Pass selection handler
+      />
       {/* Priority Selection Menu */}
       <Menu
         anchorEl={priorityAnchorEl}

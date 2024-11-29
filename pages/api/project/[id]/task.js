@@ -10,13 +10,13 @@ export default async function handler(req, res) {
 
   if (method === 'POST') {
     try {
-      const { name, assigneePrimary, assigneeSecondary, startDate, dueDate, priority,  comments, dependency, description, allocatedEffort, actualEffort, checklist, status  } = req.body;
+      const { milestone, name, assigneePrimary, assigneeSecondary, startDate, dueDate, priority,  comments, dependencies, description, allocatedEffort, actualEffort, checklist, status  } = req.body;
       const project = await Project.findById(id);
       if (!project) {
         return res.status(404).json({ success: false, error: 'Project not found' });
       }
 
-      const newTask = { name, assigneePrimary, assigneeSecondary, startDate, dueDate, priority, comments, dependency, description, allocatedEffort, actualEffort, checklist, status  };
+      const newTask = { milestone, name, assigneePrimary, assigneeSecondary, startDate, dueDate, priority, comments, dependencies, description, allocatedEffort, actualEffort, checklist, status  };
       project.tasks.push(newTask);
       await project.save();
 

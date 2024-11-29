@@ -151,7 +151,7 @@ const Drawer = styled(MuiDrawer, {
 export default function Layout({ children }) {
   const theme = useTheme();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [openInviteUser, setOpenInviteUser] = useState(false);
   const [agentName, setAgentName] = useState("");
   const [agentEmail, setAgentEmail] = useState("");
@@ -172,6 +172,37 @@ export default function Layout({ children }) {
   const [loading, setLoading] = useState(false); // State to manage loading
   const [workspaces, setWorkspaces] = useState([]); // State to store workspaces
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
+  const [isProjectExpanded, setIsProjectExpanded] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState(""); // Track which menu is expanded
+  const [activeItem, setActiveItem] = useState(""); // Track the active menu item
+
+  const handleMenuToggle = (menu) => {
+    setExpandedMenu((prev) => (prev === menu ? "" : menu)); // Toggle the menu
+  };
+
+  const handleMenuItemClick = (item, path) => {
+    setActiveItem(item); // Set the active item
+    router.push(path); // Navigate to the corresponding path
+  };
+
+  useEffect(() => {
+    const path = router.pathname;
+    const menuItems = {
+      "/post/projectDetails": { menu: "projects", item: "allProjects" },
+      "/post/myProjects": { menu: "projects", item: "myProjects" },
+      "/post/tasks": { menu: "projects", item: "tasks" },
+      "/post/directProjectDetails/stakeholder": { menu: "projects", item: "stakeholders" },
+      "/post/timecard": { menu: "projects", item: "timecard" },
+      "/post/directProjectDetails/requirements": { menu: "projects", item: "requirements" },
+      "/post/directProjectDetails/raid": { menu: "projects", item: "radi" },
+    };
+
+    if (menuItems[path]) {
+      setExpandedMenu(menuItems[path].menu); // Expand the menu
+      setActiveItem(menuItems[path].item); // Highlight the item
+    }
+  }, [router.pathname]);
+
 
   // Update selected state based on the current route
   useEffect(() => {
@@ -313,6 +344,12 @@ export default function Layout({ children }) {
       router.push("/post/settings/drawer"); //drawer.js
     } else if (viewName === "project") {
       router.push("/post/projectDetails");
+    } else if (viewName === "requirements") {
+      router.push("/post/directProjectDetails/requirements");
+    } else if (viewName === "stakeholders") {
+      router.push("/post/directProjectDetails/stakeholder");
+    } else if (viewName === "radi") {
+      router.push("/post/directProjectDetails/raid");
     }
   };
 
@@ -564,52 +601,92 @@ export default function Layout({ children }) {
               </ListItem>
             </Tooltip>
 
-            <Tooltip
-              title="Project"
-              placement="right"
-              arrow
-              style={{
-                display: "flex",
-                backgroundColor:
-                  selected === "project" ? "#1976d2" : "transparent",
-                "&:hover": {
-                  backgroundColor:
-                    selected != "project" ? "#ffffff33" : "#1976d2",
-                },
-              }}
-            >
-              <ListItem
-                button
-                onClick={(event) => {
-                  handleProjectMenuClick(event); // Pass the event object
-                  handleDrawerToggle(); // Toggle the drawer
-                }}
-                sx={{
-                  "&:hover": {
-                    bgcolor: selected != "project" ? "#ffffff33" : "#1976d2",
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: "#ffffff" }}>
-                  <CheckCircleIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Project"
-                  sx={{ color: "#ffffff", ml: -2 }}
-                />
-              </ListItem>
-              <Tooltip title="Create Project" placement="right" arrow>
-                <IconButton
-                  onClick={() => {
-                    setModalOpen(true);
+            <List>
+              {/* Parent Item for Projects */}
+              <Tooltip title="Projects" placement="right" arrow>
+                <ListItem
+                  button
+                  onClick={() => handleMenuToggle("projects")} // Toggle expansion
+                  sx={{
+                    bgcolor: expandedMenu === "projects" ? "#1976d2" : "transparent",
+                    "&:hover": {
+                      bgcolor: expandedMenu !== "projects" ? "#ffffff33" : "#1976d2",
+                    },
                   }}
                 >
-                  <AddIcon sx={{ color: "#ffffff" }} />
-                </IconButton>
+                  <ListItemIcon sx={{ color: "#ffffff" }}>
+                    <CheckCircleIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Projects"
+                    sx={{ color: "#ffffff", ml: -2 }}
+                  />
+                  <Tooltip title="Create Project" placement="right">
+                    <IconButton
+                      sx={{ color: "#ffffff" }}
+                      onClick={() => setModalOpen(true)} // Handle opening the modal for creating a new project
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Tooltip>
+                </ListItem>
               </Tooltip>
-            </Tooltip>
 
-            <Menu
+              {/* Child Items for Projects */}
+              {expandedMenu === "projects" && (
+                <Box
+                  sx={{
+                    pl: 4,
+                    maxHeight: "200px", // Set max height for scrolling
+                    overflowY: "auto", // Enable vertical scrolling
+                    scrollbarWidth: "thin", // Firefox-specific styling for scrollbar
+                    "&::-webkit-scrollbar": {
+                      width: "8px", // Custom scrollbar width for WebKit browsers
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      backgroundColor: "#0d1a33", // Track color
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      backgroundColor: "#737e8c", // Thumb color
+                      borderRadius: "10px", // Rounded scrollbar
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                      backgroundColor: "#8c96a3", // Hover color
+                    },
+                  }}
+                >
+                  {[
+                    { label: "All Projects", id: "allProjects", path: "/post/projectDetails" },
+                    { label: "My Projects", id: "myProjects", path: "/post/myProjects" },
+                    { label: "Tasks", id: "tasks", path: "/post/tasks" },
+                    { label: "Stakeholders", id: "stakeholders", path: "/post/directProjectDetails/stakeholder" },
+                    { label: "Timecard", id: "timecard", path: "/post/timecard" },
+                    { label: "Requirements", id: "requirements", path: "/post/directProjectDetails/requirements" },
+                    { label: "Radi", id: "radi", path: "/post/directProjectDetails/raid" },
+                  ].map((item) => (
+                    <ListItem
+                      button
+                      key={item.id}
+                      onClick={() => handleMenuItemClick(item.id, item.path)} // Handle item click
+                      sx={{
+                        bgcolor: activeItem === item.id ? "#1565c0" : "transparent",
+                        "&:hover": {
+                          bgcolor: activeItem !== item.id ? "#ffffff33" : "#1565c0",
+                        },
+                      }}
+                    >
+                      <ListItemText
+                        primary={item.label}
+                        sx={{ color: "#ffffff" }}
+                      />
+                    </ListItem>
+                  ))}
+                </Box>
+              )}
+            </List>
+
+
+            {/* <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={handleProjectMenuClose}
@@ -619,11 +696,11 @@ export default function Layout({ children }) {
               </MenuItem>
               <MenuItem onClick={() => setModalOpen(true)}>
                 My Projects
-                {/* <IconButton>
+                <IconButton>
                   <AddIcon />
-                </IconButton> */}
+                </IconButton>
               </MenuItem>
-            </Menu>
+            </Menu> */}
 
             <Tooltip title="User Management" placement="right" arrow>
               <ListItem
@@ -688,7 +765,7 @@ export default function Layout({ children }) {
                 button
                 onClick={() => {
                   handleWorkspaceClick(); // Fetch the workspaces
-                  handleDrawerToggle(); // Toggle the drawer
+                  // handleDrawerToggle(); // Toggle the drawer
                 }}
                 sx={{
                   "&:hover": {
@@ -766,7 +843,7 @@ export default function Layout({ children }) {
                         sx={{ color: "#ffffff" }}
                       />
                     </ListItem>
-<IconButton
+                    <IconButton
                       className="workspace-menu-icon"
                       sx={{
                         opacity: 0, // Hide icon by default

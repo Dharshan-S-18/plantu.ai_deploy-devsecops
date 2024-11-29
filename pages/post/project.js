@@ -79,6 +79,24 @@ const ProjectPage = ({ open, handleClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Validation for required fields
+  if (!project.status || !project.startDate || !project.endDate) {
+    setSnackbarMessage('Status, Start Date, and End Date are required fields.');
+    setSnackbarSeverity('error');
+    setSnackbarOpen(true);
+    return; // Prevent form submission if validation fails
+  }
+
+      // Get the current user's email from sessionStorage
+  const createdBy = sessionStorage.getItem("email");
+  // Get the current date
+  const createdDate = dayjs().format('YYYY-MM-DD HH:mm:ss'); // You can adjust the format as needed.
+  // Add these fields to the project object
+  const projectData = {
+    ...project,
+    createdBy,  // Add email from sessionStorage
+    createdDate // Add the current date
+  };
 
     try {
       const response = await fetch('/api/project', {
@@ -86,7 +104,7 @@ const ProjectPage = ({ open, handleClose }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(project),
+        body: JSON.stringify(projectData),
       });
       console.log(project);
       console.log(response);
@@ -178,7 +196,7 @@ const ProjectPage = ({ open, handleClose }) => {
                   name="description"
                   value={project.description}
                   onChange={handleChange}
-                  required
+                  
                 />
                 {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography>Team</Typography>

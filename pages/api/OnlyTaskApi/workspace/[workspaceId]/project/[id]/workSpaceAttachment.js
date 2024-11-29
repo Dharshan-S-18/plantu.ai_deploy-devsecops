@@ -47,13 +47,12 @@ export default async function handler(req, res) {
   const s3Client = new S3Client(s3Config);
 
   if (req.method === "GET") {
-    console.log("Client bucket name:", clientCredential?.bucketName);
     try {
       const listParams = {
         Bucket: clientCredential
           ? clientCredential.bucketName
           : process.env.BUCKET_NAME,
-        Prefix: `workspace/${workspaceId}/project/${id}/`,
+        Prefix: `workspace/${workspaceId}/project/${id}/attachments/`, // List only project attachments
       };
 
       const data = await s3Client.send(new ListObjectsV2Command(listParams));
@@ -95,7 +94,7 @@ export default async function handler(req, res) {
       }
 
       const uploadfileId = uuidv4();
-      const key = `workspace/${workspaceId}/project/${id}/${uploadfileId}-${file.originalFilename}`;
+      const key = `workspace/${workspaceId}/project/${id}/attachments/${uploadfileId}-${file.originalFilename}`; // Save in "attachments" folder
 
       try {
         const uploadParams = {

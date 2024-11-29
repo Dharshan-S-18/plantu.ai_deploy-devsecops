@@ -134,6 +134,7 @@ const GanttChartView = ({ workspaceId, projectId }) => {
           allocatedEffort: task.allocatedEffort,
           actualEffort: task.actualEffort,
           priority: task.priority,
+          dependencies: task.dependencies,
         }); // Set the selected task to state
         // Update URL with the task ID
         router.push(
@@ -177,6 +178,7 @@ const GanttChartView = ({ workspaceId, projectId }) => {
         allocatedEffort: task.allocatedEffort,
         actualEffort: task.actualEffort,
         priority: task.priority,
+        dependencies: task.dependencies,
       }));
       console.log(tasks);
 

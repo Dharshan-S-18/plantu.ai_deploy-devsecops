@@ -6,6 +6,12 @@ const CommentSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now } // The date the comment was made
 });
 
+const SubtaskCommentSchema = new mongoose.Schema({
+  user: { type: String, required: true }, // Store user ID or username
+  text: { type: String, required: true },  // The content of the comment
+  timestamp: { type: Date, default: Date.now } // The date the comment was made
+});
+
 // Define the Stakeholder Schema
 const RequirementSchema = new mongoose.Schema({
   requirementNo: { type: String },
@@ -14,6 +20,7 @@ const RequirementSchema = new mongoose.Schema({
   assignedTo: { type: String },
   createdBy: { type: String },
   status: { type: String },
+  createdDate: { type: Date, required: true },
 });
 
 // Define the Stakeholder Schema
@@ -22,8 +29,10 @@ const RaidSchema = new mongoose.Schema({
   description: { type: String },
   assignedTo: { type: String },
   type: { type: String },
-  createdDate: { type: Date },
+  date: { type: Date },
   status: { type: String },
+  createdBy: { type: String, required: true },
+  createdDate: { type: Date, required: true },
 });
 
 // Define the Stakeholder Schema
@@ -33,16 +42,27 @@ const StakeholdersSchema = new mongoose.Schema({
   contact: { type: Number },
   type: { type: String },
   role: { type: String },
+  createdDate: { type: Date },
+  createdBy: { type: String },
 });
 
 // Define the Subtask Schema
 const SubtaskSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  description: { type: String },
   assignee: { type: String },
   dueDate: { type: Date },
   priority: { type: String },
+  allocatedEffort: { type: String }, // Store time in HH:mm:ss format
+  actualEffort: { type: String },       // Field for additional notes
   status: { type: String },
-  comments: { type: String }
+  comments: [SubtaskCommentSchema],
+  checklist: [
+    {
+      text: { type: String, required: true },
+      completed: { type: Boolean, default: false },
+    },
+  ],
 });
 
 // Define the Task Schema, including the Subtask Schema
@@ -50,15 +70,16 @@ const TaskSchema = new mongoose.Schema({
   name: { type: String },
   assigneePrimary: { type: [String] }, // Changed to an array to store multiple assignees
   assigneeSecondary: { type: String },
-  startDate: { type:Date},
+  startDate: { type: Date },
   dueDate: { type: Date },
   priority: { type: String },
   status: { type: String },
-  dependency: { type: String },
+  dependencies: [{ type: String }],
   comments: [CommentSchema],
   allocatedEffort: { type: String }, // Store time in HH:mm:ss format
   actualEffort: { type: String },       // Field for additional notes
   description: { type: String }, // Field for description
+  milestone: { type: Boolean, default: false },
   checklist: [
     {
       text: String,
@@ -83,6 +104,8 @@ const ProjectSchema = new mongoose.Schema({
   totalBudget: { type: Number },
   budgetStartDate: { type: Date },
   businessCase: { type: String },
+  createdDate: { type: Date },
+  createdBy: { type: String },
   actualBudget: { type: Number },
   budgetEndDate: { type: Date },
   tasks: [TaskSchema], // Embed Task schema here

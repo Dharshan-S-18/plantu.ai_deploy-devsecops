@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'PUT':
       try {
-        const { name, email, contact, type, role } = req.body;
+        const { name, email, contact, type, role, createdBy, createdDate  } = req.body;
 
         // Find the project by ID
         const project = await Project.findById(id);
@@ -34,6 +34,8 @@ export default async function handler(req, res) {
         stakeholder.contact = contact || stakeholder.contact;
         stakeholder.type = type || stakeholder.type;
         stakeholder.role = role || stakeholder.role;
+        stakeholder.createdBy = createdBy || stakeholder.createdBy;
+        stakeholder.createdDate = createdDate || stakeholder.createdDate;
 
         // Save the updated project
         await project.save();

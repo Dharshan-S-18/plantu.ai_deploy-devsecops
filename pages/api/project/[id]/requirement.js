@@ -12,13 +12,13 @@ export default async function handler(req, res) {
 
   if (method === 'POST') {
     try {
-      const { requirementNo, description, shortDescription, assignedTo, createdBy, status  } = req.body;
+      const { requirementNo, description, shortDescription, assignedTo, createdBy, createdDate, status  } = req.body;
       const project = await Project.findById(id);
       if (!project) {
         return res.status(404).json({ success: false, error: 'Project not found' });
       }
 
-      const newRequirement = { requirementNo, description, shortDescription, assignedTo, createdBy, status  };
+      const newRequirement = { requirementNo, description, shortDescription, assignedTo, createdBy, createdDate, status  };
       project.requirements.push(newRequirement);
       console.log(newRequirement);
       await project.save();

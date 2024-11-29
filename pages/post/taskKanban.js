@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Box, Typography, TextField, Avatar, Paper, Tooltip, Chip, IconButton, CircularProgress, Modal } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import ChecklistIcon from "@mui/icons-material/Checklist"; // Import Add icon
 import { styled } from '@mui/system';
 import AddIcon from '@mui/icons-material/Add';
 import { generateTaskNumber } from '../../lib/generateTaskNumber';
@@ -16,29 +17,63 @@ const columns = [
 ];
 
 const Column = styled(Box)({
-  width: '22%',
-  padding: '16px',
-  borderRadius: '8px',
-  backgroundColor: '#f5f5f5',
-  marginRight: '16px',
-  minHeight: '300px',
-  display: 'flex',
-  flexDirection: 'column',
-  position: 'relative',
+  width: "100%",
+  padding: "8px", // Adjust padding to reduce spacing around each column
+  borderRadius: "8px",
+  backgroundColor: "#f5f5f5",
+  marginRight: "16px",
+  minWidth: "250px",
+  minHeight: "300px",
+  display: "flex",
+  flexDirection: "column",
+  position: "relative",
+  maxHeight: "calc(100vh - 100px)",
+  overflowY: "auto",
 });
 
-const TaskCard = styled(Paper)({
-  padding: '12px',
-  marginBottom: '8px',
-  borderLeft: '4px solid teal',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  flexDirection: 'row',
-  backgroundColor: '#fff',
-  borderRadius: '8px',
-  boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.2)',
-  position: 'relative',
+const TaskCard = styled(Paper)(({ theme }) => ({
+  width: "100%", // Adjusted width as per previous step
+  padding: "12px",
+  marginBottom: "8px",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  backgroundColor: "#fff",
+  borderRadius: "8px",
+  boxShadow: "0px 1px 3px rgba(0, 0, 0, 0.2)",
+  position: "relative",
+  height: "auto",  // This will allow the height to adjust based on content
+  minHeight: "100px",  // Minimum height if the content is small
+  transition: "border 0.3s ease, box-shadow 0.3s ease", // Smooth transition
+
+  // Add hover effect
+  "&:hover": {
+    border: "1px solid teal", // Change border on hover
+    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)", // Add a bit more shadow
+  },
+}));
+
+const TaskCardHeader = styled(Box)({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+});
+
+const TaskCardFooter = styled(Box)({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: "auto", // Align footer at the bottom
+});
+
+const TaskSubtaskCount = styled(Box)({
+  position: "absolute",
+  bottom: "8px",
+  right: "8px",
+  fontSize: "12px",
+  color: "#757575",
+  display: "flex",
+  alignItems: "center",
 });
 
 const BadgeWrapper = styled(Box)({
@@ -161,7 +196,7 @@ const KanbanView = ({ projectId }) => {
   const handleSingleClick = (task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
-    
+
     // Update the URL with task ID without reloading the page
     router.push({
       pathname: router.pathname,
@@ -169,8 +204,8 @@ const KanbanView = ({ projectId }) => {
     }, undefined, { shallow: true }); // `shallow: true` to prevent page reload
   };
 
-   // Handle closing modal and remove taskId from the URL
-   const handleCloseModal = () => {
+  // Handle closing modal and remove taskId from the URL
+  const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTask(null);
 
@@ -254,13 +289,14 @@ const KanbanView = ({ projectId }) => {
                           <Draggable key={task._id} draggableId={task._id} index={index}>
                             {(provided) => (
                               <TaskCard
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                onClick={() => handleSingleClick(task)}
-                                onDoubleClick={() => handleDoubleClick(task)}
-                              >
-                                <Typography sx={{ flexGrow: 1, marginRight: '8px' }}>
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              onClick={() => handleSingleClick(task)}
+                              onDoubleClick={() => handleDoubleClick(task)}
+                            >
+                              {/* Task Header with Task Name */}
+                              <TaskCardHeader>
                                   {editTaskId === task._id ? (
                                     <TextField
                                       value={editedTaskName}
@@ -270,30 +306,42 @@ const KanbanView = ({ projectId }) => {
                                       autoFocus
                                     />
                                   ) : (
-                                    task.name
+                                    <Typography variant="subtitle2" sx={{ display: 'block' }}>
+                                      {task.name}
+                                    </Typography>
                                   )}
-                                </Typography>
+                                </TaskCardHeader>
+                            
+                              {/* Task Footer with Assignee, Due Date, and Subtask Count */}
+                              <TaskCardFooter>
                                 <BadgeWrapper>
-                                  {task.priority && (
-                                    <Chip
-                                      label={task.priority}
-                                      color={
-                                        task.priority === 'High'
-                                          ? 'error'
-                                          : task.priority === 'Medium'
-                                            ? 'warning'
-                                            : 'default'
-                                      }
-                                      size="small"
-                                    />
-                                  )}
-                                  <Tooltip title={task.assigneePrimary || 'Unassigned'} arrow>
-                                    <Avatar sx={{ width: 24, height: 24, bgcolor: '#ff5722', cursor: 'pointer' }}>
-                                      {task.assigneePrimary ? task.assigneePrimary[0] : 'U'}
+                                  <Tooltip title={task.assigneePrimary || "Unassigned"} arrow>
+                                    <Avatar
+                                      sx={{
+                                        width: 24,
+                                        height: 24,
+                                        bgcolor: "#ff5722",
+                                      }}
+                                    >
+                                       {task.assigneePrimary
+      ? (String(task.assigneePrimary).split(' ')[0][0]) // Convert to string, then take first letter of the first word
+      : "U"} {/* If unassigned, show 'U' */}
                                     </Avatar>
                                   </Tooltip>
+                                  <Typography variant="body2" color="textSecondary" ml={0}>
+                                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No Due Date"}
+                                  </Typography>
                                 </BadgeWrapper>
-                              </TaskCard>
+                            
+                                {/* Subtask Count Display with Icon */}
+                                <TaskSubtaskCount>
+                                  <ChecklistIcon fontSize="small" sx={{ mb: 0.5, color: "#757575" }} />
+                                  <Typography variant="caption">
+                                    {task.subtasks.length} Subtasks
+                                  </Typography>
+                                </TaskSubtaskCount>
+                              </TaskCardFooter>
+                            </TaskCard>
                             )}
                           </Draggable>
                         ))

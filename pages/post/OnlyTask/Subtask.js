@@ -31,7 +31,7 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
   const [dueDateAnchorEl, setDueDateAnchorEl] = useState(null);
   const [allocatedEffortAnchorEl, setAllocatedEffortAnchorEl] = useState(null);
   const [actualEffortAnchorEl, setActualEffortAnchorEl] = useState(null);
-  const [newChecklistItem, setNewChecklistItem] = useState(''); 
+  const [newChecklistItem, setNewChecklistItem] = useState('');
   const [isModified, setIsModified] = useState(false);
   const initialDataRef = useRef(null);
 
@@ -94,7 +94,7 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
 
   const handleAllocatedEffortChipClick = (event) => setAllocatedEffortAnchorEl(event.currentTarget);
   const handleAllocatedEffortMenuClose = () => setAllocatedEffortAnchorEl(null);
-  
+
   const handleActualEffortChipClick = (event) => setActualEffortAnchorEl(event.currentTarget);
   const handleActualEffortMenuClose = () => setActualEffortAnchorEl(null);
 
@@ -173,7 +173,7 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth sx={{ '& .MuiDialog-paper': { width: '80%', maxWidth: '1200px' } }}>
-      <DialogTitle
+        <DialogTitle
           sx={{
             bgcolor: '#00264d',
             color: '#fff',
@@ -184,26 +184,26 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
         >
           Subtask
           <Box sx={{ display: 'flex', gap: 1 }}>
-          {/* Link icon to copy URL */}
-          <Tooltip title="Copy Subtask Link" arrow>
-            <IconButton
-              onClick={() => {
-                const taskUrl = `${window.location.origin}/post/OnlyTask/workspace/${workspaceId}/projects/${projectId}/edit?taskId=${taskId}&subtaskId=${subtask._id}`;
-                navigator.clipboard.writeText(taskUrl); // Copy URL to clipboard
-              }}
-              sx={{
-                color: '#fff',
-                transition: 'transform 0.3s ease',
-                '&:hover': {
-                  transform: 'rotate(20deg)',
-                },
-              }}
-            >
-              <LinkIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Close the Subtask" arrow>
-          <IconButton onClick={onClose} sx={{
+            {/* Link icon to copy URL */}
+            <Tooltip title="Copy Subtask Link" arrow>
+              <IconButton
+                onClick={() => {
+                  const taskUrl = `${window.location.origin}/post/OnlyTask/workspace/${workspaceId}/projects/${projectId}/edit?taskId=${taskId}&subtaskId=${subtask._id}`;
+                  navigator.clipboard.writeText(taskUrl); // Copy URL to clipboard
+                }}
+                sx={{
+                  color: '#fff',
+                  transition: 'transform 0.3s ease',
+                  '&:hover': {
+                    transform: 'rotate(20deg)',
+                  },
+                }}
+              >
+                <LinkIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Close the Subtask" arrow>
+              <IconButton onClick={onClose} sx={{
                 color: '#fff',
                 transition: 'transform 0.3s ease',
                 '&:hover': {
@@ -211,8 +211,8 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
                 },
               }}>
                 <CloseIcon />
-                </IconButton>
-          </Tooltip>
+              </IconButton>
+            </Tooltip>
           </Box>
         </DialogTitle>
 
@@ -282,9 +282,9 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
                     </MenuItem>
                   ))}
                 </Menu>
-              
 
-              {/* </Box> */}
+
+                {/* </Box> */}
                 {/* Assignee Chip */}
                 {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> */}
                 {/* <Typography variant="body1">Assignee:</Typography> */}
@@ -307,8 +307,8 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
                 />
                 {/* </Box> */}
 
-              {/* Due Date, Allocated Effort, Actual Effort */}
-              {/* Due Date Chip */}
+                {/* Due Date, Allocated Effort, Actual Effort */}
+                {/* Due Date Chip */}
                 {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> */}
                 {/* <Typography variant="body1">Due Date:</Typography> */}
                 <Tooltip title="Due Date" placement="top" arrow>
@@ -393,14 +393,14 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
                     />
                   </Box>
                 </Menu>
-              {/* </Box> */}
+                {/* </Box> */}
               </Box>
 
               {/* Checklist */}
               <Typography variant="h6">Checklist</Typography>
               <List sx={{ padding: -2 }}>
                 {subtaskData.checklist.map((item, index) => (
-                  <ListItem key={index} sx={{ display: 'flex', alignItems: 'center', paddingY: 0.5, marginBottom: 0.5,  }}>
+                  <ListItem key={index} sx={{ display: 'flex', alignItems: 'center', paddingY: 0.5, marginBottom: 0.5, }}>
                     <Checkbox
                       checked={item.completed}
                       onChange={() => handleToggleChecklistItem(index)}
@@ -408,7 +408,7 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
                     <ListItemText
                       primary={item.text}
                       style={{
-                        textDecoration: item.completed ? 'line-through' : 'none',  marginLeft: 1,
+                        textDecoration: item.completed ? 'line-through' : 'none', marginLeft: 1,
                       }}
                     />
                     <ListItemSecondaryAction>
@@ -439,28 +439,28 @@ const SubtaskModal = ({ workspaceId, projectId, taskId, open, onClose, subtask, 
             {/* Comments Section */}
             {subtask && subtask._id && (
               <Box
-              sx={{
-                position: 'sticky',
-                top: 0,
-                flex: '6',
-                alignSelf: 'flex-start',
-                minWidth: '200px',
-                maxWidth: '550px',
-                bgcolor: 'background.paper',
-                pl: 2,
-                //borderLeft: '1px solid #ddd',
-              }}
-            >
-              <CommentsSection
-                workspaceId={workspaceId}
-                projectId={projectId}
-                taskId={taskId}
-                subtaskId={subtaskData?._id}
-                comments={subtaskData?.comments || []}
+                sx={{
+                  position: 'sticky',
+                  top: 0,
+                  flex: '6',
+                  alignSelf: 'flex-start',
+                  minWidth: '200px',
+                  maxWidth: '550px',
+                  bgcolor: 'background.paper',
+                  pl: 2,
+                  //borderLeft: '1px solid #ddd',
+                }}
+              >
+                <CommentsSection
+                  workspaceId={workspaceId}
+                  projectId={projectId}
+                  taskId={taskId}
+                  subtaskId={subtaskData?._id}
+                  comments={subtaskData?.comments || []}
                 //onCommentsChange={(updatedComments) => setSubtaskData((prevData) => ({ ...prevData, comments: updatedComments }))}
-              />
-            </Box>
-             )}
+                />
+              </Box>
+            )}
           </Box>
         </DialogContent>
 
