@@ -80,13 +80,24 @@ const ProjectPage = ({ open, handleClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+      // Get the current user's email from sessionStorage
+  const createdBy = sessionStorage.getItem("email");
+  // Get the current date
+  const createdDate = dayjs().format('YYYY-MM-DD HH:mm:ss'); // You can adjust the format as needed.
+  // Add these fields to the project object
+  const projectData = {
+    ...project,
+    createdBy,  // Add email from sessionStorage
+    createdDate // Add the current date
+  };
+
     try {
       const response = await fetch('/api/project', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(project),
+        body: JSON.stringify(projectData),
       });
       console.log(project);
       console.log(response);

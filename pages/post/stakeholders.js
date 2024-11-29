@@ -96,11 +96,11 @@ const StakeholderForm = ({ projectId, stakeholder, onClose, onStakeholderChange,
         await axios.delete(`/api/directProjectApi/stakeholder/${stakeholder._id}`);
         console.log('Stakeholder removed from the original location');
         
-        } else if (projectId) {
+        } else if (projectId && stakeholder) {
           // If Project Name is not updated (keep the stakeholder in the same project)
           response = await axios.put(`/api/project/${projectId}/stakeholders/${stakeholder._id}`, newStakeholderData);
           console.log('Stakeholder updated under the same project:', response.data);
-        } else {
+        } else if ( stakeholder) {
           // If no project context, update stakeholder directly
           response = await axios.put(`/api/directProjectApi/stakeholder/${stakeholder._id}`, newStakeholderData);
           console.log('Stakeholder updated directly:', response.data);
@@ -190,7 +190,7 @@ const StakeholderForm = ({ projectId, stakeholder, onClose, onStakeholderChange,
                 >
                   {projectNames.map((project) => (
                     <MenuItem key={project._id} value={project._id}>
-                      {project.projectName}
+                      {project.projectId}
                     </MenuItem>
                   ))}
                 </Select>

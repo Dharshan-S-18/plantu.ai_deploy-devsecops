@@ -9,7 +9,7 @@ import {
   Avatar,
   Typography,
   Select,
-  MenuItem,
+  MenuItem, Chip, Menu,
   Link,
   Dialog,
   DialogTitle,
@@ -20,7 +20,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { FormControl, Input, FormLabel } from "@mui/joy";
+import { FormControl, Input, FormLabel, Textarea } from "@mui/joy";
 import EditIcon from "@mui/icons-material/Edit";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import SaveIcon from "@mui/icons-material/Save";
@@ -46,6 +46,16 @@ const Details = ({ projectId }) => {
   const [projectManagers, setProjectManagers] = useState([]); // New state for project managers
   const [isEditing, setIsEditing] = useState(false);
   const { data: session, status } = useSession();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [loading, setLoading] = useState(false); // Loading state for API call
+  const openStatus = Boolean(anchorEl);
+  const statusOptions = ["To Do", "In Progress", "Completed"]; // Predefined statuses
+  // Status color mapping
+  const statusColors = {
+    "To Do": '#ff9800',
+    "In Progress": '#2196f3',
+    "Completed": "#66bb6a",
+  };
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [attachments, setAttachments] = useState([]);
@@ -57,6 +67,52 @@ const Details = ({ projectId }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // success or error
+
+  const handleChipClick = (event) => {
+    // if (isEditing) {
+    setAnchorEl(event.currentTarget); // Open the menu
+    // }
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null); // Close the menu
+  };
+
+
+  const handleStatusChange = async (status) => {
+    setLoading(true); // Show loading spinner
+
+    try {
+      // Update the status locally
+      setEditableProject((prev) => ({
+        ...prev,
+        status,
+      }));
+
+      // Call the PUT API
+      const response = await fetch(`/api/project/${projectId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        setSnackbarMessage("Status updated successfully!");
+        setSnackbarSeverity("success");
+      } else {
+        throw new Error("Failed to update status");
+      }
+    } catch (error) {
+      setSnackbarMessage("Error updating status.");
+      setSnackbarSeverity("error");
+    } finally {
+      setLoading(false); // Hide loading spinner
+      handleMenuClose();
+      setSnackbarOpen(true); // Show snackbar
+    }
+  };
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
@@ -237,6 +293,7 @@ const Details = ({ projectId }) => {
       });
       const data = await response.json();
       setProject(data.project);
+      console.log(data.project);
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to update project data:", error);
@@ -298,15 +355,79 @@ const Details = ({ projectId }) => {
 
   return (
     <>
-      <Box sx={{ position: "relative", mb: 4 }}>
+      <Box sx={{ position: "relative", display: "flex", alignItems: "center", mb: 4 }}>
         <Typography variant="h5" fontWeight="bold">
           {project.projectId}
-          <Tooltip title="Add Attachment" arrow>
+          {/* <Tooltip title="Add Attachment" arrow>
+            <Button onClick={handleAttachClick}>
+              <AttachFileIcon />
+            </Button>
+          </Tooltip> */}
+        </Typography>
+
+        {/* <Box> */}
+        <Chip
+          label={
+            loading ? (
+              <CircularProgress size={20} sx={{ color: "white" }} />
+            ) : (
+              editableProject.status || "Select Status"
+            )
+          }
+          onClick={handleChipClick}
+          //variant="outlined"
+          //color="primary"
+          sx={{
+            cursor: isEditing ? "pointer" : "default",
+            backgroundColor: statusColors[editableProject.status] || "default",
+            color: editableProject.status ? "black" : "inherit",
+            // fontWeight: "bold",
+            ml: 1
+          }}
+        />
+        <Tooltip title="Add Attachment" arrow>
             <Button onClick={handleAttachClick}>
               <AttachFileIcon />
             </Button>
           </Tooltip>
-        </Typography>
+        <Menu
+          anchorEl={anchorEl}
+          open={openStatus}
+          onClose={handleMenuClose}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "center",
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "center",
+          }}
+        >
+          {statusOptions.map((option) => (
+            <MenuItem
+              key={option}
+              onClick={() => handleStatusChange(option)}
+            >
+              {option}
+            </MenuItem>
+          ))}
+        </Menu>
+        {/* Snackbar for feedback */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+        {/* </Box> */}
 
         <input
           type="file"
@@ -395,31 +516,21 @@ const Details = ({ projectId }) => {
               disabled={!isEditing}
             />
           </FormControl>
-          <FormControl sx={{ width: "200px" }}>
-            <FormLabel>Status</FormLabel>
-            <Input
-              fullWidth
-              name="status"
-              value={editableProject.status || ""}
-              onChange={handleInputChange}
-              placeholder="Status"
-              disabled={!isEditing}
-            />
-          </FormControl>
         </Box>
         <FormControl sx={{ mb: 2 }}>
           <FormLabel>Description</FormLabel>
-          <Input
+          <Textarea
             fullWidth
             name="description"
             value={editableProject.description || ""}
             onChange={handleInputChange}
             placeholder="Description"
             disabled={!isEditing}
+            minRows={4}
           />
         </FormControl>
       </Box>
-      <Paper elevation={2} sx={{ p: 3, mb: 4, position: "relative" }}>
+      {/* <Paper elevation={2} sx={{ p: 3, mb: 4, position: "relative" }}> */}
         {/* {isEditing ? (
                     <>
                         <IconButton
@@ -449,9 +560,9 @@ const Details = ({ projectId }) => {
                     </Tooltip>
                 )} */}
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
             <div>Project Details</div>
-          </Grid>
+          </Grid> */}
           <Grid item xs={12} sm={4}>
             <FormControl sx={{ mb: 2 }}>
               <FormLabel>Portfolio</FormLabel>
@@ -511,8 +622,8 @@ const Details = ({ projectId }) => {
                 value={
                   editableProject.startDate
                     ? new Date(editableProject.startDate)
-                        .toISOString()
-                        .substr(0, 10)
+                      .toISOString()
+                      .substr(0, 10)
                     : ""
                 }
                 onChange={handleInputChange}
@@ -540,8 +651,8 @@ const Details = ({ projectId }) => {
                 value={
                   editableProject.budgetStartDate
                     ? new Date(editableProject.budgetStartDate)
-                        .toISOString()
-                        .substr(0, 10)
+                      .toISOString()
+                      .substr(0, 10)
                     : ""
                 }
                 onChange={handleInputChange}
@@ -559,8 +670,8 @@ const Details = ({ projectId }) => {
                 value={
                   editableProject.endDate
                     ? new Date(editableProject.endDate)
-                        .toISOString()
-                        .substr(0, 10)
+                      .toISOString()
+                      .substr(0, 10)
                     : ""
                 }
                 onChange={handleInputChange}
@@ -588,8 +699,8 @@ const Details = ({ projectId }) => {
                 value={
                   editableProject.budgetEndDate
                     ? new Date(editableProject.budgetEndDate)
-                        .toISOString()
-                        .substr(0, 10)
+                      .toISOString()
+                      .substr(0, 10)
                     : ""
                 }
                 onChange={handleInputChange}
@@ -598,7 +709,7 @@ const Details = ({ projectId }) => {
             </FormControl>
           </Grid>
         </Grid>
-      </Paper>
+      {/* </Paper> */}
       <Paper elevation={2} sx={{ p: 3, mb: 4, position: "relative" }}>
         <div>Business Case</div>
         <Grid container spacing={3}>
@@ -636,29 +747,29 @@ const Details = ({ projectId }) => {
             <div>Milestones</div>
             {isEditing
               ? milestones.map((milestone, index) => (
-                  <FormControl key={index} sx={{ mb: 2 }}>
-                    <FormLabel>{`Milestone ${index + 1}`}</FormLabel>
-                    <Input
-                      fullWidth
-                      value={milestone}
-                      onChange={(e) => {
-                        const updatedMilestones = [...milestones];
-                        updatedMilestones[index] = e.target.value;
-                        setMilestones(updatedMilestones);
-                      }}
-                    />
-                  </FormControl>
-                ))
-              : milestones.map((milestone, index) => (
+                <FormControl key={index} sx={{ mb: 2 }}>
+                  <FormLabel>{`Milestone ${index + 1}`}</FormLabel>
                   <Input
-                    key={index}
                     fullWidth
                     value={milestone}
-                    disabled
-                    readOnly
-                    sx={{ mb: 2 }}
+                    onChange={(e) => {
+                      const updatedMilestones = [...milestones];
+                      updatedMilestones[index] = e.target.value;
+                      setMilestones(updatedMilestones);
+                    }}
                   />
-                ))}
+                </FormControl>
+              ))
+              : milestones.map((milestone, index) => (
+                <Input
+                  key={index}
+                  fullWidth
+                  value={milestone}
+                  disabled
+                  readOnly
+                  sx={{ mb: 2 }}
+                />
+              ))}
             {isEditing && (
               <Button
                 variant="contained"
