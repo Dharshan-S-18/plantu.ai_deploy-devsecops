@@ -1,0 +1,32 @@
+name: Security Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - feature/**
+
+jobs:
+  setup:
+    name: Repository Setup
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Display Node Version
+        run: node -v
+
+      - name: Display npm Version
+        run: npm -v
