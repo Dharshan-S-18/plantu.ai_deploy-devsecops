@@ -51,7 +51,6 @@ jobs:
 
   trufflehog:
     name: TruffleHog Secret Scan
-
     runs-on: ubuntu-latest
 
     needs: setup
@@ -72,10 +71,8 @@ jobs:
           base: ""
           head: HEAD
 
-
   docker-build:
     name: Docker Build
-
     runs-on: ubuntu-latest
 
     needs:
@@ -97,4 +94,29 @@ jobs:
         with:
           context: .
           push: false
+          load: true
           tags: plantu-ai:latest
+
+  trivy:
+    name: Trivy Image Scan
+    runs-on: ubuntu-latest
+
+    needs:
+      - docker-build
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Image Scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: plantu-ai:latest
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
