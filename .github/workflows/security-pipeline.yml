@@ -49,7 +49,7 @@ jobs:
         with:
           config: p/security-audit
 
-    trufflehog:
+  trufflehog:
     name: TruffleHog Secret Scan
 
     runs-on: ubuntu-latest
